@@ -1,6 +1,10 @@
 package com.recetitas.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +45,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalUriHandler
+import com.recetitas.AUTOR
+import com.recetitas.URL_GITHUB
 import com.recetitas.carpetaTemporal
+import com.recetitas.versionApp
 import com.recetitas.data.Repositorio
 import com.recetitas.model.Categoria
 import com.recetitas.model.Tema
@@ -71,16 +79,30 @@ fun PantallaAjustes(repo: Repositorio, volver: () -> Unit, importar: () -> Unit,
     val compartir = rememberCompartir()
     val scope = rememberCoroutineScope()
     var trabajando by remember { mutableStateOf(false) }
+    var utensilios by remember { mutableStateOf(false) }
 
     Marco("Ajustes", volver) {
         Seccion("Tamaño de letra")
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            listOf(14, 17, 20, 23).forEachIndexed { i, tam ->
-                SegmentedButton(a.tamanoLetra == i, { repo.guardarAjustes(a.copy(tamanoLetra = i)) }, SegmentedButtonDefaults.itemShape(i, 4)) {
-                    Text("A", fontSize = tam.sp)
+        // Cada "A" tiene un tamaño fijo en pantalla (no depende del tamaño elegido), así se ve la diferencia
+        val escala = LocalDensity.current.fontScale
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(18 to "Normal", 26 to "Grande", 34 to "Muy grande", 44 to "Enorme").forEachIndexed { i, (tam, nombre) ->
+                val elegido = a.tamanoLetra == i
+                Column(
+                    Modifier.weight(1f).clip(RoundedCornerShape(14.dp))
+                        .background(if (elegido) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer)
+                        .clickable { repo.guardarAjustes(a.copy(tamanoLetra = i)) }.padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    val color = if (elegido) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+                    Box(Modifier.height(64.dp), contentAlignment = Alignment.Center) {
+                        Text("A", fontSize = (tam / escala).sp, color = color)
+                    }
+                    Text(nombre, fontSize = (13 / escala).sp, color = color, maxLines = 1)
                 }
             }
         }
+        Text("Así se leen las recetas con este tamaño.", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 10.dp))
         Seccion("Tema")
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
             listOf(Tema.CLARO to "Claro", Tema.OSCURO to "Oscuro", Tema.AUTO to "Auto").forEachIndexed { i, (t, nombre) ->
@@ -94,6 +116,7 @@ fun PantallaAjustes(repo: Repositorio, volver: () -> Unit, importar: () -> Unit,
         Interruptor("Copia de seguridad diaria", "Guarda cada día una copia de todas las recetas dentro de la app (las 7 últimas).", a.copiaDiaria) {
             repo.guardarAjustes(a.copy(copiaDiaria = it))
         }
+        Fila("Mis utensilios", "Cambiar el nombre o la foto de un utensilio, o borrarlo.") { utensilios = true }
         Fila("Exportar todas las recetas", "Un archivo con todo, para guardarlo fuera o pasarlo a otro móvil u ordenador.") {
             if (trabajando) return@Fila
             trabajando = true
@@ -108,7 +131,19 @@ fun PantallaAjustes(repo: Repositorio, volver: () -> Unit, importar: () -> Unit,
         Fila("Importar recetas o una copia", "Abre un archivo .receta.", importar)
         Fila("Libro de recetas en PDF", "Todas las recetas ordenadas por tipo, con índice.") { ir(Pantalla.Pdf) }
         if (trabajando) CircularProgressIndicator(Modifier.padding(16.dp))
+
+        Seccion("Acerca de")
+        val abrir = LocalUriHandler.current
+        Text("Recetitas en familia", style = MaterialTheme.typography.titleMedium)
+        Text("Versión ${versionApp() ?: "de desarrollo"}", style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Creada por $AUTOR", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Fila("Buscar actualizaciones", "Abre la página de versiones en GitHub para descargar la última.") {
+            runCatching { abrir.openUri("$URL_GITHUB/releases") }
+        }
+        Espacio(24)
     }
+    if (utensilios) SelectorUtensilios(repo, emptyList(), alCerrar = { utensilios = false }, elegir = false)
 }
 
 @Composable

@@ -1,5 +1,6 @@
 package com.recetitas.pdf
 
+import com.recetitas.AUTOR
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.io.write
@@ -9,7 +10,7 @@ import kotlinx.io.write
  * rectángulos de color e imágenes JPEG. Es igual en Android y en Windows, sin librerías.
  * Medidas en puntos (A4 = 595 x 842), origen arriba a la izquierda (se da la vuelta al escribir).
  */
-class Pdf {
+class Pdf(private val titulo: String = "Recetitas en familia") {
     val ancho = 595f
     val alto = 842f
 
@@ -96,10 +97,12 @@ class Pdf {
             out.write(datos)
             out.write(latin1("\nendstream\nendobj\n"))
         }
+        // Metadatos del documento (Archivo > Propiedades en cualquier lector de PDF)
+        obj("<< /Title (${escapar(titulo)}) /Author (${escapar(AUTOR)}) /Creator (Recetitas en familia - $AUTOR) /Producer (Recetitas en familia) >>")
         val inicioXref = out.size
         val xref = StringBuilder("xref\n0 ${offsets.size + 1}\n0000000000 65535 f \n")
         offsets.forEach { xref.append(it.toString().padStart(10, '0')).append(" 00000 n \n") }
-        xref.append("trailer\n<< /Size ${offsets.size + 1} /Root 1 0 R >>\nstartxref\n$inicioXref\n%%EOF\n")
+        xref.append("trailer\n<< /Size ${offsets.size + 1} /Root 1 0 R /Info ${offsets.size} 0 R >>\nstartxref\n$inicioXref\n%%EOF\n")
         out.write(latin1(xref.toString()))
         return out.readByteArray()
     }

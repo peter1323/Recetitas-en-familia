@@ -55,9 +55,10 @@ compose.desktop {
             // Sin jdk.accessibility la app no arranca en Windows con la accesibilidad de Java activada
             modules("jdk.accessibility", "jdk.unsupported")
             packageName = "Recetitas en familia"
-            packageVersion = "1.0.0"
+            packageVersion = providers.gradleProperty("recetitas.version").get()
             description = "Recetario familiar"
             vendor = "peter1323"
+            copyright = "© 2026 peter1323. Creador de Recetitas en familia."
             // Doble clic en un archivo .receta lo abre con la app
             fileAssociation("application/x-recetitas", "receta", "Receta de Recetitas en familia")
             windows {

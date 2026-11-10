@@ -36,6 +36,9 @@ actual fun prepararFoto(bytes: ByteArray): ByteArray? = runCatching {
     surface.makeImageSnapshot().encodeToData(EncodedImageFormat.JPEG, 85)!!.bytes
 }.getOrNull()
 
+// jpackage pone esta propiedad al empaquetar; con "gradlew run" no existe
+actual fun versionApp(): String? = System.getProperty("jpackage.app-version")
+
 actual fun crearZip(destino: String, entradas: Map<String, String>) = zipear(destino, entradas)
 actual fun extraerZip(origen: String, carpeta: String) = deszipear(origen, carpeta)
 

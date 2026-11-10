@@ -42,5 +42,11 @@ expect fun AtrasSistema(activo: Boolean, alVolver: () -> Unit)
 @Composable
 expect fun rememberCamara(alFoto: (ByteArray) -> Unit): (() -> Unit)?
 
+/** Versión instalada ("1.1.0"), o null si se ejecuta desde el código sin empaquetar. */
+expect fun versionApp(): String?
+
+const val AUTOR = "peter1323"
+const val URL_GITHUB = "https://github.com/peter1323/Recetitas-en-familia"
+
 /** Ruta de un archivo .receta que se ha abierto desde fuera (WhatsApp, doble clic). */
 val archivoRecibido = MutableStateFlow<String?>(null)

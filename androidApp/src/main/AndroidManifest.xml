@@ -7,6 +7,10 @@
         android:allowBackup="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
+        <!-- Autoría: Recetitas en familia es una app creada por peter1323 -->
+        <meta-data android:name="com.recetitas.autor" android:value="peter1323" />
+        <meta-data android:name="com.recetitas.repositorio" android:value="https://github.com/peter1323/Recetitas-en-familia" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

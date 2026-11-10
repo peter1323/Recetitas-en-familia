@@ -206,7 +206,11 @@ fun PantallaEditor(repo: Repositorio, id: String?, categoria: Categoria?, volver
         }
     }
 
-    if (elegirUtensilios) SelectorUtensilios(repo, r.utensilios, alCerrar = { elegirUtensilios = false }) { r = r.copy(utensilios = it) }
+    if (elegirUtensilios) SelectorUtensilios(repo, r.utensilios, alCerrar = { elegirUtensilios = false }) {
+        // Los borrados desde el lápiz ya no existen: se quitan también de esta receta
+        val existen = repo.utensilios.value.map { u -> u.id }.toSet()
+        r = r.copy(utensilios = it.filter { id -> id in existen })
+    }
 
     if (salir) AlertDialog(
         onDismissRequest = { salir = false },
@@ -298,22 +302,35 @@ private fun Contador(valor: String, menos: () -> Unit, mas: () -> Unit) {
     }
 }
 
-/** Lista común de utensilios: se eligen los de esta receta o se crea uno nuevo con su foto. */
+/**
+ * Lista común de utensilios. Con [elegir] se marcan los de una receta; sin él (desde Ajustes) solo se gestionan.
+ * El lápiz de cada utensilio permite renombrarlo, cambiar su foto o borrarlo.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SelectorUtensilios(repo: Repositorio, elegidos: List<String>, alCerrar: () -> Unit, alCambiar: (List<String>) -> Unit) {
+fun SelectorUtensilios(
+    repo: Repositorio, elegidos: List<String>, alCerrar: () -> Unit,
+    elegir: Boolean = true, alCambiar: (List<String>) -> Unit = {},
+) {
     val todos by repo.utensilios.collectAsState()
     var sel by remember { mutableStateOf(elegidos) }
     var nombre by remember { mutableStateOf("") }
     var foto by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf(false) }
+    var editando by remember { mutableStateOf<Utensilio?>(null) }
     Dialog(alCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(Modifier.widthIn(max = 700.dp).fillMaxWidth().padding(12.dp), shape = RoundedCornerShape(20.dp)) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Tus utensilios", style = MaterialTheme.typography.headlineSmall)
+                Text(if (elegir) "Tus utensilios" else "Mis utensilios", style = MaterialTheme.typography.headlineSmall)
                 if (todos.isEmpty()) Text("Aún no hay ninguno. Crea el primero abajo.")
+                else Text(if (elegir) "Toca los que usa esta receta. Con el lápiz lo cambias o lo borras." else "Toca un utensilio para cambiar su nombre o su foto, o para borrarlo.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    todos.forEach { u -> TarjetaUtensilio(repo, u, u.id in sel) { sel = if (u.id in sel) sel - u.id else sel + u.id } }
+                    todos.forEach { u ->
+                        TarjetaUtensilio(repo, u, elegir && u.id in sel, alEditar = { editando = u }) {
+                            if (elegir) sel = if (u.id in sel) sel - u.id else sel + u.id else editando = u
+                        }
+                    }
                 }
 
                 Text("Nuevo utensilio", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
@@ -329,23 +346,70 @@ fun SelectorUtensilios(repo: Repositorio, elegidos: List<String>, alCerrar: () -
                 }) { Icon(Icons.Outlined.Add, null); Text("  Crear y añadir") }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    TextButton(alCerrar, Modifier.weight(1f).height(52.dp)) { Text("Cancelar") }
-                    Button({ alCambiar(sel); alCerrar() }, Modifier.weight(1f).height(52.dp)) { Text("Listo") }
+                    if (elegir) {
+                        TextButton(alCerrar, Modifier.weight(1f).height(52.dp)) { Text("Cancelar") }
+                        Button({ alCambiar(sel); alCerrar() }, Modifier.weight(1f).height(52.dp)) { Text("Listo") }
+                    } else Button(alCerrar, Modifier.weight(1f).height(52.dp)) { Text("Cerrar") }
                 }
             }
         }
     }
+    editando?.let { u ->
+        EditorUtensilio(repo, u, alCerrar = { editando = null }, alBorrar = { sel = sel - u.id; editando = null })
+    }
+}
+
+/** Cambiar nombre o foto de un utensilio, o borrarlo de la lista común (y de todas las recetas). */
+@Composable
+private fun EditorUtensilio(repo: Repositorio, inicial: Utensilio, alCerrar: () -> Unit, alBorrar: () -> Unit) {
+    var u by remember { mutableStateOf(inicial) }
+    var error by remember { mutableStateOf(false) }
+    var confirmar by remember { mutableStateOf(false) }
+    val usos = repo.recetas.value.count { inicial.id in it.utensilios }
+    Dialog(onDismissRequest = alCerrar) {
+        Surface(shape = RoundedCornerShape(20.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Editar utensilio", style = MaterialTheme.typography.headlineSmall)
+                CampoTexto(u.nombre, { u = u.copy(nombre = it); error = false }, "Nombre")
+                if (error) Text("Ponle un nombre al utensilio.", color = MaterialTheme.colorScheme.error)
+                if (u.foto != null) Foto(repo, u.foto, Modifier.size(140.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    BotonesFoto(repo, { u = u.copy(foto = it) }, Modifier.weight(1f))
+                    if (u.foto != null) IconButton({ u = u.copy(foto = null) }) { Icon(Icons.Outlined.Delete, "Quitar foto") }
+                }
+                Button({
+                    if (u.nombre.isBlank()) error = true
+                    else { repo.guardarUtensilio(u.copy(nombre = u.nombre.trim())); alCerrar() }
+                }, Modifier.fillMaxWidth().height(52.dp)) { Text("Guardar") }
+                TextButton({ confirmar = true }, Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.Delete, null, tint = MaterialTheme.colorScheme.error)
+                    Text("  Borrar utensilio", color = MaterialTheme.colorScheme.error)
+                }
+                TextButton(alCerrar, Modifier.fillMaxWidth()) { Text("Cancelar") }
+            }
+        }
+    }
+    if (confirmar) AlertDialog(
+        onDismissRequest = { confirmar = false },
+        title = { Text("¿Borrar \"${inicial.nombre}\"?") },
+        text = { Text(if (usos == 0) "No lo usa ninguna receta." else "Se quitará también de ${if (usos == 1) "1 receta" else "$usos recetas"}.") },
+        confirmButton = { Button({ confirmar = false; repo.borrarUtensilio(inicial.id); alBorrar() }) { Text("Borrar") } },
+        dismissButton = { TextButton({ confirmar = false }) { Text("No") } },
+    )
 }
 
 @Composable
-private fun TarjetaUtensilio(repo: Repositorio, u: Utensilio, elegido: Boolean, alTocar: () -> Unit) {
+private fun TarjetaUtensilio(repo: Repositorio, u: Utensilio, elegido: Boolean, alEditar: () -> Unit, alTocar: () -> Unit) {
     val borde = if (elegido) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    Column(Modifier.width(110.dp).clip(RoundedCornerShape(14.dp)).border(borde, RoundedCornerShape(14.dp)).clickable(onClick = alTocar).padding(6.dp)) {
+    Column(Modifier.width(120.dp).clip(RoundedCornerShape(14.dp)).border(borde, RoundedCornerShape(14.dp)).clickable(onClick = alTocar).padding(6.dp)) {
         Box {
             Foto(repo, u.foto, Modifier.fillMaxWidth().heightIn(min = 90.dp, max = 90.dp))
             if (elegido) Icon(Icons.Outlined.CheckCircle, "Elegido", Modifier.align(Alignment.TopEnd).padding(4.dp)
                 .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(50)), tint = MaterialTheme.colorScheme.primary)
         }
-        Text(u.nombre, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(u.nombre, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(top = 4.dp))
+            IconButton(alEditar, Modifier.size(32.dp)) { Icon(Icons.Outlined.Edit, "Editar ${u.nombre}", Modifier.size(20.dp)) }
+        }
     }
 }

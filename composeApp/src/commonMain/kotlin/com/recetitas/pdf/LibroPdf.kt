@@ -1,5 +1,6 @@
 package com.recetitas.pdf
 
+import com.recetitas.AUTOR
 import com.recetitas.model.Categoria
 import com.recetitas.model.Receta
 import com.recetitas.model.Utensilio
@@ -29,7 +30,7 @@ fun crearPdf(
     val categorias = ordenadas.map { it.categoria }.distinct().size
     val paginasIndice = if (libro) (ordenadas.size + 2 * categorias + 29) / 30 else 0
 
-    val pdf = Pdf()
+    val pdf = Pdf(if (libro) "Recetitas en familia" else ordenadas.firstOrNull()?.nombre ?: "Receta")
     if (libro) repeat(1 + paginasIndice) { pdf.nuevaPagina() }
     val inicio = mutableMapOf<String, Int>()
     for (r in ordenadas) {
@@ -50,6 +51,8 @@ private fun portada(pdf: Pdf, total: Int) {
     pdf.texto(titulo, (pdf.ancho - pdf.anchoTexto(titulo, 40f, Fuente.NEGRITA)) / 2, 380f, 40f, Fuente.NEGRITA, TEJA)
     val sub = "$total recetas"
     pdf.texto(sub, (pdf.ancho - pdf.anchoTexto(sub, 18f)) / 2, 420f, 18f, Fuente.NORMAL, GRIS)
+    val pie = "Hecho con Recetitas en familia, app creada por $AUTOR"
+    pdf.texto(pie, (pdf.ancho - pdf.anchoTexto(pie, 10f)) / 2, pdf.alto - 40, 10f, Fuente.NORMAL, GRIS)
 }
 
 private fun indice(pdf: Pdf, recetas: List<Receta>, inicio: Map<String, Int>, paginas: Int) {

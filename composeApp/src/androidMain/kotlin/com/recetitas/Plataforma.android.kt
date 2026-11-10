@@ -33,11 +33,15 @@ import java.util.zip.ZipOutputStream
 
 private lateinit var carpetaAndroid: String
 private lateinit var cacheAndroid: String
+private var versionAndroid: String? = null
+
+actual fun versionApp(): String? = versionAndroid
 
 /** Lo llama MainActivity al arrancar y cada vez que llega un archivo de fuera. */
 fun iniciarAndroid(activity: ComponentActivity) {
     carpetaAndroid = activity.filesDir.path
     cacheAndroid = activity.cacheDir.path
+    versionAndroid = runCatching { activity.packageManager.getPackageInfo(activity.packageName, 0).versionName }.getOrNull()
     FileKit.init(activity)
 }
 

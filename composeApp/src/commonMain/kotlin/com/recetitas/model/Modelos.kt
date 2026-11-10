@@ -88,7 +88,7 @@ data class Ajustes(
     val ultimaCopia: Long = 0,
 )
 
-val ESCALAS_LETRA = listOf(1.0f, 1.15f, 1.3f, 1.5f)
+val ESCALAS_LETRA = listOf(1.0f, 1.2f, 1.4f, 1.65f)
 
 /** Lo que va dentro de un archivo .receta y de las copias de seguridad. */
 @Serializable
@@ -96,4 +96,5 @@ data class Paquete(
     val recetas: List<Receta> = emptyList(),
     val utensilios: List<Utensilio> = emptyList(),
     val version: Int = 1,
+    val app: String = "Recetitas en familia - creada por peter1323",
 )
