@@ -54,7 +54,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.recetitas.data.Repositorio
 import com.recetitas.model.Categoria
 import com.recetitas.model.Receta
@@ -87,7 +89,7 @@ fun PantallaInicio(repo: Repositorio, ir: (Pantalla) -> Unit, importar: () -> Un
         CampoBusqueda(busqueda, { busqueda = it }, "Buscar receta")
 
         LazyVerticalGrid(
-            GridCells.Adaptive(if (busqueda.isBlank()) 150.dp else 300.dp),
+            GridCells.Adaptive(if (busqueda.isBlank()) 170.dp else 300.dp),
             Modifier.weight(1f).padding(top = 12.dp),
             contentPadding = PaddingValues(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -102,11 +104,10 @@ fun PantallaInicio(repo: Repositorio, ir: (Pantalla) -> Unit, importar: () -> Un
                     FotoConNombre(repo, r.foto, r.nombre, Modifier.fillMaxWidth().height(150.dp)) { ir(Pantalla.VerReceta(r.id)) }
                 }
             } else {
+                item { Cuadro("Todas", Icons.Outlined.MenuBook, recetas.size) { ir(Pantalla.Lista(null)) } }
                 items(Categoria.entries) { c ->
                     Cuadro(c.nombre, c.icono(), recetas.count { it.categoria == c }) { ir(Pantalla.Lista(c)) }
                 }
-                item { Cuadro("Favoritas", Icons.Outlined.FavoriteBorder, recetas.count { it.favorita }) { ir(Pantalla.Lista(null, favoritas = true)) } }
-                item { Cuadro("Todas", Icons.Outlined.MenuBook, recetas.size) { ir(Pantalla.Lista(null)) } }
             }
         }
 
@@ -114,6 +115,7 @@ fun PantallaInicio(repo: Repositorio, ir: (Pantalla) -> Unit, importar: () -> Un
             Icon(Icons.Outlined.Add, null); Text("  Añadir receta", style = MaterialTheme.typography.titleMedium)
         }
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+            BotonAbajo("Favoritas", Icons.Outlined.FavoriteBorder) { ir(Pantalla.Lista(null, favoritas = true)) }
             BotonAbajo("Importar", Icons.Outlined.Download, importar)
             BotonAbajo("Libro PDF", Icons.Outlined.PictureAsPdf) { ir(Pantalla.Pdf) }
             BotonAbajo("Ajustes", Icons.Outlined.Settings) { ir(Pantalla.Ajustes) }
@@ -121,15 +123,18 @@ fun PantallaInicio(repo: Repositorio, ir: (Pantalla) -> Unit, importar: () -> Un
     }
 }
 
-// Icono encima del texto: así caben los tres aunque la letra esté al máximo
+// Icono encima del texto: así caben los cuatro aunque la letra esté al máximo
 @Composable
 private fun RowScope.BotonAbajo(texto: String, icono: ImageVector, alTocar: () -> Unit) {
     Column(
         Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).clickable(onClick = alTocar).padding(vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(icono, null, tint = MaterialTheme.colorScheme.primary)
-        Text(texto, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        Icon(icono, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+        // Tope de tamaño: con la letra "Enorme" no caben cuatro palabras en una fila del móvil
+        val escala = LocalDensity.current.fontScale
+        Text(texto, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge,
+            fontSize = (minOf(14f * escala, 18f) / escala).sp, maxLines = 1)
     }
 }
 
