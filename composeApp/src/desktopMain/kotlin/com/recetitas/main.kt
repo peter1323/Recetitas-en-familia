@@ -4,6 +4,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.recetitas.ui.App
@@ -17,7 +18,8 @@ fun main(args: Array<String>) {
             onCloseRequest = ::exitApplication,
             title = "Recetitas en familia",
             icon = remember { BitmapPainter(bytesAImagen(object {}.javaClass.getResourceAsStream("/icono.png")!!.readBytes())!!) },
-            state = rememberWindowState(width = 1100.dp, height = 800.dp),
+            // Se abre ocupando toda la pantalla; al restaurarla queda en 1100x800
+            state = rememberWindowState(placement = WindowPlacement.Maximized, width = 1100.dp, height = 800.dp),
         ) {
             window.minimumSize = java.awt.Dimension(420, 600)
             App()
