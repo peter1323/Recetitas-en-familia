@@ -21,6 +21,8 @@ fun crearPdf(
     utensilios: List<Utensilio>,
     fotosPasos: Boolean,
     leerFoto: (String) -> ByteArray?,
+    /** Nombre de una receta vinculada en un paso (puede no estar entre las que van en el PDF). */
+    nombreReceta: (String) -> String? = { id -> recetas.find { it.id == id }?.nombre },
 ): ByteArray {
     val ordenadas = recetas.sortedWith(compareBy({ it.categoria.ordinal }, { it.nombre.lowercase() }))
     val libro = ordenadas.size > 1
@@ -36,7 +38,7 @@ fun crearPdf(
     for (r in ordenadas) {
         pdf.nuevaPagina()
         inicio[r.id] = pdf.numPaginas
-        Maquetador(pdf, leerFoto).receta(r, utensilios, fotosPasos)
+        Maquetador(pdf, leerFoto, nombreReceta).receta(r, utensilios, fotosPasos)
     }
     if (libro) {
         pdf.irAPagina(1); portada(pdf, ordenadas.size)
@@ -81,7 +83,7 @@ private fun indice(pdf: Pdf, recetas: List<Receta>, inicio: Map<String, Int>, pa
     }
 }
 
-private class Maquetador(val pdf: Pdf, val leerFoto: (String) -> ByteArray?) {
+private class Maquetador(val pdf: Pdf, val leerFoto: (String) -> ByteArray?, val nombreReceta: (String) -> String?) {
     var y = MARGEN
     val anchoUtil = pdf.ancho - 2 * MARGEN
 
@@ -158,6 +160,7 @@ private class Maquetador(val pdf: Pdf, val leerFoto: (String) -> ByteArray?) {
                 y += 4
                 parrafo("${i + 1}.  ${p.texto}", 12f)
                 p.etiqueta()?.let { parrafo(it, 11f, Fuente.NEGRITA, TEJA, sangria = 18f) }
+                p.receta?.let(nombreReceta)?.let { parrafo("Ver receta: $it", 11f, Fuente.NEGRITA, NARANJA, sangria = 18f) }
                 if (p.nota.isNotBlank()) parrafo("Nota: ${p.nota}", 11f, Fuente.CURSIVA, NARANJA, sangria = 18f)
                 if (fotosPasos) p.foto?.let(leerFoto)?.let {
                     sitio(150f); y += 4

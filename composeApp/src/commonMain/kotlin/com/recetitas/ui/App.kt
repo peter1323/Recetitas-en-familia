@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -93,7 +94,8 @@ fun App() {
                 when (actual) {
                     Pantalla.Inicio -> PantallaInicio(repo, ir, importar = { selectorImportar.launch() })
                     is Pantalla.Lista -> PantallaLista(repo, actual, ir, volver)
-                    is Pantalla.VerReceta -> PantallaReceta(repo, actual.id, ir, volver)
+                    // key: al saltar de una receta a otra vinculada, la nueva empieza desde arriba
+                    is Pantalla.VerReceta -> key(actual.id) { PantallaReceta(repo, actual.id, ir, volver) }
                     is Pantalla.Editor -> PantallaEditor(repo, actual.id, actual.categoria, volver = volver, alGuardar = { id ->
                         // Al crear una receta nueva se pasa directamente a verla
                         volver()

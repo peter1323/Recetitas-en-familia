@@ -32,6 +32,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.RemoveCircleOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -200,7 +201,7 @@ fun PantallaEditor(repo: Repositorio, id: String?, categoria: Categoria?, volver
 
     paso?.let { i ->
         val actual = r.pasos.getOrNull(i) ?: Paso()
-        EditorPaso(repo, actual, if (i < r.pasos.size) "Editar paso ${i + 1}" else "Nuevo paso", alCerrar = { paso = null }) { nuevo ->
+        EditorPaso(repo, r.id, actual, if (i < r.pasos.size) "Editar paso ${i + 1}" else "Nuevo paso", alCerrar = { paso = null }) { nuevo ->
             r = r.copy(pasos = if (i < r.pasos.size) r.pasos.toMutableList().also { it[i] = nuevo } else r.pasos + nuevo)
             paso = null
         }
@@ -227,11 +228,13 @@ private fun <T> mover(lista: List<T>, i: Int, d: Int): List<T> {
     return lista.toMutableList().also { val t = it[i]; it[i] = it[j]; it[j] = t }
 }
 
-/** Menú para editar un paso: texto, fuego, tiempo, foto y nota. */
+/** Menú para editar un paso: texto, fuego, tiempo, receta vinculada, foto y nota. [idReceta]: la receta del paso (no se puede vincular a sí misma). */
 @Composable
-fun EditorPaso(repo: Repositorio, inicial: Paso, titulo: String, alCerrar: () -> Unit, alGuardar: (Paso) -> Unit) {
+fun EditorPaso(repo: Repositorio, idReceta: String, inicial: Paso, titulo: String, alCerrar: () -> Unit, alGuardar: (Paso) -> Unit) {
     var p by remember { mutableStateOf(inicial) }
     var error by remember { mutableStateOf(false) }
+    var elegirReceta by remember { mutableStateOf(false) }
+    if (elegirReceta) SelectorReceta(repo, idReceta, alCerrar = { elegirReceta = false }) { p = p.copy(receta = it); elegirReceta = false }
     Dialog(alCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(Modifier.widthIn(max = 700.dp).fillMaxWidth().padding(12.dp), shape = RoundedCornerShape(20.dp)) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -261,6 +264,19 @@ fun EditorPaso(repo: Repositorio, inicial: Paso, titulo: String, alCerrar: () ->
                 }
                 CampoTexto(p.tiempo, { p = p.copy(tiempo = it) }, "Tiempo (por ejemplo 3 min)")
 
+                Text("Receta que se usa en este paso", style = MaterialTheme.typography.titleMedium)
+                Text("Por ejemplo, la mayonesa casera de la ensaladilla. Al ver la receta, un botón te llevará a ella.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                val vinculada = p.receta?.let { id -> repo.recetas.value.find { it.id == id } }
+                if (vinculada != null) Row(verticalAlignment = Alignment.CenterVertically) {
+                    Foto(repo, vinculada.foto, Modifier.size(56.dp))
+                    Text(vinculada.nombre, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f).padding(horizontal = 10.dp))
+                    IconButton({ p = p.copy(receta = null) }) { Icon(Icons.Outlined.Close, "Quitar receta vinculada") }
+                }
+                OutlinedButton({ elegirReceta = true }) {
+                    Icon(Icons.Outlined.Link, null); Text(if (vinculada == null) "  Vincular una receta" else "  Cambiar receta")
+                }
+
                 Text("Foto del paso", style = MaterialTheme.typography.titleMedium)
                 if (p.foto != null) Foto(repo, p.foto, Modifier.fillMaxWidth().height(160.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -274,6 +290,35 @@ fun EditorPaso(repo: Repositorio, inicial: Paso, titulo: String, alCerrar: () ->
                     Button({ if (p.texto.isBlank()) error = true else alGuardar(p.copy(texto = p.texto.trim(), nota = p.nota.trim())) },
                         Modifier.weight(1f).height(52.dp)) { Text("Guardar") }
                 }
+            }
+        }
+    }
+}
+
+/** Lista de recetas con buscador para vincular una a un paso. */
+@Composable
+private fun SelectorReceta(repo: Repositorio, excluir: String, alCerrar: () -> Unit, alElegir: (String) -> Unit) {
+    var busqueda by remember { mutableStateOf("") }
+    val lista = repo.recetas.value.filter { it.id != excluir && (busqueda.isBlank() || coincide(it, busqueda)) }.sortedBy { it.nombre.lowercase() }
+    Dialog(alCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(Modifier.widthIn(max = 700.dp).fillMaxWidth().padding(12.dp), shape = RoundedCornerShape(20.dp)) {
+            Column(Modifier.padding(16.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Elegir receta", style = MaterialTheme.typography.headlineSmall)
+                CampoBusqueda(busqueda, { busqueda = it }, "Buscar receta")
+                Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+                    if (lista.isEmpty()) Text("No hay ninguna receta que se llame así.", Modifier.padding(vertical = 12.dp))
+                    lista.forEach { r ->
+                        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { alElegir(r.id) }.padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically) {
+                            Foto(repo, r.foto, Modifier.size(56.dp))
+                            Column(Modifier.padding(start = 12.dp)) {
+                                Text(r.nombre, style = MaterialTheme.typography.bodyLarge)
+                                Text(r.categoria.nombre, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+                TextButton(alCerrar, Modifier.fillMaxWidth().height(52.dp)) { Text("Cancelar") }
             }
         }
     }

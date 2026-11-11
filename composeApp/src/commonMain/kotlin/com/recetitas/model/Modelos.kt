@@ -45,6 +45,8 @@ data class Paso(
     val foto: String? = null,
     val fuego: Fuego = Fuego(),
     val tiempo: String = "",
+    /** id de otra receta que se usa en este paso (la mayonesa casera de la ensaladilla). */
+    val receta: String? = null,
 ) {
     /** "Vitro 6 · 3 min", "45 min", o null si no hay nada que mostrar. */
     fun etiqueta(): String? = listOfNotNull(fuego.texto(), tiempo.trim().ifEmpty { null })

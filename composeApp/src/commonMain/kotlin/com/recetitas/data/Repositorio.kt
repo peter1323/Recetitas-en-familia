@@ -118,8 +118,26 @@ class Repositorio(private val carpeta: String) {
 
     // ---------- COMPARTIR / COPIAS ----------
 
-    /** Crea un .receta (zip con paquete.json y sus fotos) con estas recetas y los utensilios que usan. */
-    fun exportar(recetas: List<Receta>, destino: String, todosLosUtensilios: Boolean = false) {
+    fun nombreReceta(id: String): String? = _recetas.value.find { it.id == id }?.nombre
+
+    /** Estas recetas más las que usan sus pasos (y las que usan esas...), sin repetir. */
+    fun conVinculadas(recetas: List<Receta>): List<Receta> {
+        val todas = recetas.toMutableList()
+        var i = 0
+        while (i < todas.size) {
+            todas[i++].pasos.mapNotNull { it.receta }.forEach { id ->
+                if (todas.none { it.id == id }) _recetas.value.find { it.id == id }?.let { todas += it }
+            }
+        }
+        return todas
+    }
+
+    /**
+     * Crea un .receta (zip con paquete.json y sus fotos) con estas recetas y los utensilios que usan.
+     * Van también las recetas vinculadas en los pasos, para que el enlace funcione a quien la recibe.
+     */
+    fun exportar(elegidas: List<Receta>, destino: String, todosLosUtensilios: Boolean = false) {
+        val recetas = conVinculadas(elegidas)
         val ids = recetas.flatMap { it.utensilios }.toSet()
         val utensilios = _utensilios.value.filter { todosLosUtensilios || it.id in ids }
         val paquete = Paquete(recetas, utensilios)

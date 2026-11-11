@@ -150,6 +150,11 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
                             }
                         }
                         paso.etiqueta()?.let { EtiquetaFuego(it) }
+                        recetas.find { it.id == paso.receta }?.let { otra ->
+                            OutlinedButton({ ir(Pantalla.VerReceta(otra.id)) }) {
+                                Icon(Icons.Outlined.MenuBook, null); Text("  Ver receta: ${otra.nombre}")
+                            }
+                        }
                         if (paso.foto != null || paso.nota.isNotBlank()) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             paso.foto?.let { f -> Foto(repo, f, Modifier.size(110.dp, 80.dp)) { visor = Triple(f, "Paso ${i + 1}", paso.nota.ifBlank { paso.texto }) } }
                             if (paso.nota.isNotBlank()) Nota(paso.nota, Modifier.weight(1f))
@@ -181,7 +186,7 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
     visor?.let { (f, t, pie) -> VisorFoto(repo, f, t, pie) { visor = null } }
 
     pasoEditando?.let { i ->
-        EditorPaso(repo, r.pasos[i], "Editar paso ${i + 1}", alCerrar = { pasoEditando = null }) { nuevo ->
+        EditorPaso(repo, r.id, r.pasos[i], "Editar paso ${i + 1}", alCerrar = { pasoEditando = null }) { nuevo ->
             repo.guardarReceta(r.copy(pasos = r.pasos.toMutableList().also { it[i] = nuevo }))
             pasoEditando = null
         }
@@ -224,7 +229,7 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
 }
 
 private suspend fun pdfReceta(repo: Repositorio, r: Receta): String = withContext(Dispatchers.Default) {
-    escribirTemporal("receta.pdf", crearPdf(listOf(r), repo.utensilios.value, fotosPasos = true, leerFoto = repo::leerFoto))
+    escribirTemporal("receta.pdf", crearPdf(listOf(r), repo.utensilios.value, fotosPasos = true, leerFoto = repo::leerFoto, nombreReceta = repo::nombreReceta))
 }
 
 @Composable

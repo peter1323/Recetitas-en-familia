@@ -199,7 +199,7 @@ fun PantallaPdf(repo: Repositorio, volver: () -> Unit) {
                 trabajando = true
                 scope.launch {
                     val ruta = withContext(Dispatchers.Default) {
-                        escribirTemporal("libro.pdf", crearPdf(elegidas, repo.utensilios.value, fotosPasos, repo::leerFoto))
+                        escribirTemporal("libro.pdf", crearPdf(elegidas, repo.utensilios.value, fotosPasos, repo::leerFoto, repo::nombreReceta))
                     }
                     trabajando = false
                     compartir(ruta, "Recetitas en familia.pdf")

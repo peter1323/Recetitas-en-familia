@@ -23,7 +23,7 @@ class PdfYPaqueteTest {
     )
 
     @Test fun pdfValido() {
-        val bytes = crearPdf(listOf(flan, flan.copy(id = "2", nombre = "Lentejas", categoria = Categoria.PRIMEROS)), emptyList(), true) { null }
+        val bytes = crearPdf(listOf(flan, flan.copy(id = "2", nombre = "Lentejas", categoria = Categoria.PRIMEROS)), emptyList(), true, leerFoto = { null })
         val texto = bytes.decodeToString()
         assertTrue(texto.startsWith("%PDF-1.4"))
         assertTrue(texto.trimEnd().endsWith("%%EOF"))
@@ -60,6 +60,19 @@ class PdfYPaqueteTest {
         assertEquals(listOf(olla), receptor.utensilios.value)
         assertTrue(receptor.leerFoto(foto)!!.contentEquals(byteArrayOf(1, 2, 3)))
         assertEquals(null, receptor.leerPaquete(Path(base, "emisor", "recetas.json").toString(), tmp))
+    }
+
+    @Test fun compartirLlevaLasRecetasVinculadas() {
+        val repo = Repositorio(Path(carpetaTemporal(), "vinculos-${flan.id}").toString())
+        val mayonesa = Receta(nombre = "Mayonesa casera", pasos = listOf(Paso("Batir")))
+        val huevo = Receta(nombre = "Huevo cocido")
+        // La mayonesa enlaza a la ensaladilla y la ensaladilla a la mayonesa: no debe entrar en bucle
+        val ensaladilla = Receta(nombre = "Ensaladilla", pasos = listOf(Paso("Añadir la mayonesa", receta = mayonesa.id), Paso("Huevo", receta = huevo.id)))
+        listOf(mayonesa.copy(pasos = listOf(Paso("Batir", receta = ensaladilla.id))), huevo, ensaladilla, flan).forEach(repo::guardarReceta)
+        assertEquals(listOf("Ensaladilla", "Mayonesa casera", "Huevo cocido"), repo.conVinculadas(listOf(ensaladilla)).map { it.nombre })
+        // Un enlace a una receta borrada se ignora
+        repo.borrarReceta(huevo.id)
+        assertEquals(2, repo.conVinculadas(listOf(ensaladilla)).size)
     }
 
     @Test fun limpiarFotosSoloBorraHuerfanas() {
