@@ -79,7 +79,6 @@ fun PantallaAjustes(repo: Repositorio, volver: () -> Unit, importar: () -> Unit,
     val compartir = rememberCompartir()
     val scope = rememberCoroutineScope()
     var trabajando by remember { mutableStateOf(false) }
-    var utensilios by remember { mutableStateOf(false) }
 
     Marco("Ajustes", volver) {
         Seccion("Tamaño de letra")
@@ -116,7 +115,6 @@ fun PantallaAjustes(repo: Repositorio, volver: () -> Unit, importar: () -> Unit,
         Interruptor("Copia de seguridad diaria", "Guarda cada día una copia de todas las recetas dentro de la app (las 7 últimas).", a.copiaDiaria) {
             repo.guardarAjustes(a.copy(copiaDiaria = it))
         }
-        Fila("Mis utensilios", "Cambiar el nombre o la foto de un utensilio, o borrarlo.") { utensilios = true }
         Fila("Exportar todas las recetas", "Un archivo con todo, para guardarlo fuera o pasarlo a otro móvil u ordenador.") {
             if (trabajando) return@Fila
             trabajando = true
@@ -143,7 +141,6 @@ fun PantallaAjustes(repo: Repositorio, volver: () -> Unit, importar: () -> Unit,
         }
         Espacio(24)
     }
-    if (utensilios) SelectorUtensilios(repo, emptyList(), alCerrar = { utensilios = false }, elegir = false)
 }
 
 @Composable

@@ -388,7 +388,7 @@ fun SelectorUtensilios(
                     val u = Utensilio(nombre = nombre.trim(), foto = foto)
                     repo.guardarUtensilio(u)
                     sel = sel + u.id; nombre = ""; foto = null
-                }) { Icon(Icons.Outlined.Add, null); Text("  Crear y añadir") }
+                }) { Icon(Icons.Outlined.Add, null); Text(if (elegir) "  Crear y añadir" else "  Crear") }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     if (elegir) {

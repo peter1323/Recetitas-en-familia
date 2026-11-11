@@ -92,7 +92,7 @@ fun App() {
             MantenerPantallaEncendida(ajustes.pantallaEncendida && actual is Pantalla.VerReceta)
             Box(Modifier.fillMaxSize()) {
                 when (actual) {
-                    Pantalla.Inicio -> PantallaInicio(repo, ir, importar = { selectorImportar.launch() })
+                    Pantalla.Inicio -> PantallaInicio(repo, ir)
                     is Pantalla.Lista -> PantallaLista(repo, actual, ir, volver)
                     // key: al saltar de una receta a otra vinculada, la nueva empieza desde arriba
                     is Pantalla.VerReceta -> key(actual.id) { PantallaReceta(repo, actual.id, ir, volver) }

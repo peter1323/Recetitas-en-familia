@@ -25,7 +25,7 @@ import androidx.compose.material.icons.outlined.BakeryDining
 import androidx.compose.material.icons.outlined.Cake
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.DinnerDining
-import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Blender
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.PictureAsPdf
@@ -48,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -79,7 +80,9 @@ fun sinAcentos(s: String) = s.lowercase().map {
 }.joinToString("")
 
 @Composable
-fun PantallaInicio(repo: Repositorio, ir: (Pantalla) -> Unit, importar: () -> Unit) {
+fun PantallaInicio(repo: Repositorio, ir: (Pantalla) -> Unit) {
+    var utensilios by remember { mutableStateOf(false) }
+    if (utensilios) SelectorUtensilios(repo, emptyList(), alCerrar = { utensilios = false }, elegir = false)
     val recetas by repo.recetas.collectAsState()
     var busqueda by rememberSaveable { mutableStateOf("") }
 
@@ -116,7 +119,7 @@ fun PantallaInicio(repo: Repositorio, ir: (Pantalla) -> Unit, importar: () -> Un
         }
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
             BotonAbajo("Favoritas", Icons.Outlined.FavoriteBorder) { ir(Pantalla.Lista(null, favoritas = true)) }
-            BotonAbajo("Importar", Icons.Outlined.Download, importar)
+            BotonAbajo("Utensilios", Icons.Outlined.Blender) { utensilios = true }
             BotonAbajo("Libro PDF", Icons.Outlined.PictureAsPdf) { ir(Pantalla.Pdf) }
             BotonAbajo("Ajustes", Icons.Outlined.Settings) { ir(Pantalla.Ajustes) }
         }

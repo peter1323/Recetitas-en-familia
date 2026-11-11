@@ -98,12 +98,16 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
                         r.foto?.let { visor = Triple(it, r.nombre, "") }
                     }
                     BotonRedondo(Icons.AutoMirrored.Outlined.ArrowBack, "Volver", volver, Modifier.align(Alignment.TopStart))
-                    BotonRedondo(
-                        if (r.favorita) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
-                        if (r.favorita) "Quitar de favoritas" else "Añadir a favoritas",
-                        { repo.guardarReceta(r.copy(favorita = !r.favorita)) }, Modifier.align(Alignment.TopEnd),
-                        color = if (r.favorita) Color(0xFFE24B4A) else Color.White,
-                    )
+                    Row(Modifier.align(Alignment.TopEnd)) {
+                        BotonRedondo(Icons.Outlined.Edit, "Editar receta", { ir(Pantalla.Editor(r.id)) }, Modifier)
+                        BotonRedondo(
+                            if (r.favorita) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
+                            if (r.favorita) "Quitar de favoritas" else "Añadir a favoritas",
+                            { repo.guardarReceta(r.copy(favorita = !r.favorita)) }, Modifier,
+                            color = if (r.favorita) Color(0xFFE24B4A) else Color.White,
+                        )
+                        BotonRedondo(Icons.Outlined.Delete, "Borrar receta", { confirmarBorrar = true }, Modifier)
+                    }
                 }
                 val datos = listOfNotNull(r.categoria.nombre, r.autor.takeIf { it.isNotBlank() }?.let { "Receta de $it" }, r.tiempo.takeIf { it.isNotBlank() })
                 Text(datos.joinToString("  ·  "), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
@@ -169,13 +173,6 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
                         Button({ menuCompartir = true }, Modifier.weight(1f).height(52.dp)) { Icon(Icons.Outlined.Share, null); Text("  Compartir") }
                         if (r.fotoOriginal != null) OutlinedButton({ visor = Triple(r.fotoOriginal, "Receta original", "") }, Modifier.weight(1f).height(52.dp)) {
                             Icon(Icons.Outlined.MenuBook, null); Text("  Original")
-                        }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedButton({ ir(Pantalla.Editor(r.id)) }, Modifier.weight(1f).height(52.dp)) { Icon(Icons.Outlined.Edit, null); Text("  Editar") }
-                        TextButton({ confirmarBorrar = true }, Modifier.weight(1f).height(52.dp)) {
-                            Icon(Icons.Outlined.Delete, null, tint = MaterialTheme.colorScheme.error)
-                            Text("  Borrar", color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
