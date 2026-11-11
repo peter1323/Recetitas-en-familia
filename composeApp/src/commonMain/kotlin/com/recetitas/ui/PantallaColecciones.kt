@@ -70,7 +70,7 @@ fun PantallaColecciones(repo: Repositorio, ir: (Pantalla) -> Unit, volver: () ->
                 style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(vertical = 24.dp),
             )
             LazyVerticalGrid(
-                GridCells.Adaptive(170.dp), Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 90.dp),
+                GridCells.Adaptive(150.dp), Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 90.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(colecciones.sortedBy { sinAcentos(it.nombre) }, key = { it.id }) { c ->

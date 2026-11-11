@@ -92,7 +92,7 @@ fun PantallaInicio(repo: Repositorio, ir: (Pantalla) -> Unit) {
         CampoBusqueda(busqueda, { busqueda = it }, "Buscar receta")
 
         LazyVerticalGrid(
-            GridCells.Adaptive(if (busqueda.isBlank()) 170.dp else 300.dp),
+            GridCells.Adaptive(if (busqueda.isBlank()) 150.dp else 300.dp),
             Modifier.weight(1f).padding(top = 12.dp),
             contentPadding = PaddingValues(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -133,10 +133,10 @@ private fun RowScope.BotonAbajo(texto: String, icono: ImageVector, alTocar: () -
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(icono, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
-        // Tope de tamaño: con la letra "Enorme" no caben cuatro palabras ("Colecciones" es la más larga) en una fila del móvil
+        // Nunca más grande que la letra Normal: si no, "Colecciones" no cabe en el móvil
         val escala = LocalDensity.current.fontScale
         Text(texto, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge,
-            fontSize = (minOf(14f * escala, 16f) / escala).sp, maxLines = 1)
+            fontSize = (14f / maxOf(escala, 1f)).sp, maxLines = 1)
     }
 }
 

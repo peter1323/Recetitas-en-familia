@@ -9,6 +9,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import com.recetitas.ColorBarras
 import com.recetitas.model.Ajustes
 import com.recetitas.model.ESCALAS_LETRA
 import com.recetitas.model.Tema
@@ -58,6 +59,7 @@ fun TemaRecetitas(ajustes: Ajustes, contenido: @Composable () -> Unit) {
     val d = LocalDensity.current
     val escala = ESCALAS_LETRA[ajustes.tamanoLetra.coerceIn(ESCALAS_LETRA.indices)]
     CompositionLocalProvider(LocalDensity provides Density(d.density, d.fontScale * escala)) {
+        ColorBarras(oscuroActivo)
         MaterialTheme(colorScheme = if (oscuroActivo) oscuro else claro, content = contenido)
     }
 }

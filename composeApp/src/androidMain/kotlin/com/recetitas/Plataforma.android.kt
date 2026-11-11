@@ -14,6 +14,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.core.view.WindowCompat
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.ImageBitmap
@@ -146,6 +148,18 @@ actual fun MantenerPantallaEncendida(activo: Boolean) {
     DisposableEffect(activo) {
         vista.keepScreenOn = activo
         onDispose { vista.keepScreenOn = false }
+    }
+}
+
+@Composable
+actual fun ColorBarras(oscuro: Boolean) {
+    val vista = LocalView.current
+    SideEffect {
+        val ventana = (vista.context as? Activity)?.window ?: return@SideEffect
+        WindowCompat.getInsetsController(ventana, vista).apply {
+            isAppearanceLightStatusBars = !oscuro
+            isAppearanceLightNavigationBars = !oscuro
+        }
     }
 }
 

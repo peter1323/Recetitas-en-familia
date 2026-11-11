@@ -11,6 +11,26 @@
 
 ---
 
+## Capturas
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/capturas/inicio.png" width="230" alt="Pantalla de inicio"><br><sub>Inicio, por tipos de plato</sub></td>
+    <td align="center"><img src="docs/capturas/versiones.png" width="230" alt="Elegir versión"><br><sub>Varias versiones: eliges cuál cocinar</sub></td>
+    <td align="center"><img src="docs/capturas/receta.png" width="230" alt="Receta"><br><sub>Receta con raciones, versiones y utensilios</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/capturas/pasos.png" width="230" alt="Pasos"><br><sub>Ingredientes y pasos con fuego y notas</sub></td>
+    <td align="center"><img src="docs/capturas/receta-vinculada.png" width="230" alt="Receta vinculada"><br><sub>Un paso que usa otra receta</sub></td>
+    <td align="center"><img src="docs/capturas/coleccion.png" width="230" alt="Colección"><br><sub>Colecciones propias</sub></td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/capturas/windows.png" width="820" alt="La app en Windows"><br>
+  <sub>La misma app en Windows</sub>
+</p>
+
 ## Qué hace
 
 - **Recetas por tipo**: entrantes, primeros, segundos, postres, salsas, masas y panes, y otros. También hay favoritas.

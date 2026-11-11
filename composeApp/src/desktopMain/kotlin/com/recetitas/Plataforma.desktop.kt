@@ -67,6 +67,9 @@ actual fun rememberDictado(alTexto: (String) -> Unit): (() -> Unit)? = null
 @Composable
 actual fun MantenerPantallaEncendida(activo: Boolean) {}
 
+@Composable
+actual fun ColorBarras(oscuro: Boolean) {}
+
 /**
  * En Windows "atrás" es la tecla Escape (la recoge la ventana en main.kt).
  * Cada pantalla se apunta al aparecer; la última apuntada que esté activa es la que vuelve atrás.

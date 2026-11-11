@@ -34,6 +34,10 @@ expect fun rememberDictado(alTexto: (String) -> Unit): (() -> Unit)?
 @Composable
 expect fun MantenerPantallaEncendida(activo: Boolean)
 
+/** Iconos de la barra de arriba del móvil (hora, batería) oscuros con tema claro y blancos con tema oscuro. */
+@Composable
+expect fun ColorBarras(oscuro: Boolean)
+
 /** Botón "atrás" del móvil. En Windows no hace nada. */
 @Composable
 expect fun AtrasSistema(activo: Boolean, alVolver: () -> Unit)
