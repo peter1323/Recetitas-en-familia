@@ -120,7 +120,7 @@ fun PantallaAjustes(repo: Repositorio, volver: () -> Unit, importar: () -> Unit,
             trabajando = true
             scope.launch {
                 val ruta = withContext(Dispatchers.Default) {
-                    Path(carpetaTemporal(), "todas.receta").toString().also { repo.exportar(repo.recetas.value, it, todosLosUtensilios = true) }
+                    Path(carpetaTemporal(), "todas.receta").toString().also { repo.exportar(repo.recetas.value, it, copiaCompleta = true) }
                 }
                 trabajando = false
                 compartir(ruta, "Recetitas en familia - copia.receta")

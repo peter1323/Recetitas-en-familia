@@ -74,7 +74,12 @@ data class Receta(
     val foto: String? = null,
     val fotoOriginal: String? = null,
     val favorita: Boolean = false,
+    /** Nombre de esta versión ("De la abuela", "Con huevo"). Las recetas con el mismo nombre son versiones del mismo plato. */
+    val version: String = "",
 ) {
+    /** "Empanada de atún (De la abuela)", o solo el nombre si no tiene versión. */
+    fun titulo(): String = if (version.isBlank()) nombre else "$nombre ($version)"
+
     fun fotos(): List<String> = listOfNotNull(foto, fotoOriginal) + pasos.mapNotNull { it.foto }
 }
 
@@ -92,11 +97,19 @@ data class Ajustes(
 
 val ESCALAS_LETRA = listOf(1.0f, 1.2f, 1.4f, 1.65f)
 
+@Serializable
+data class Coleccion(
+    val id: String = nuevoId(),
+    val nombre: String = "",
+    val recetas: List<String> = emptyList(),
+)
+
 /** Lo que va dentro de un archivo .receta y de las copias de seguridad. */
 @Serializable
 data class Paquete(
     val recetas: List<Receta> = emptyList(),
     val utensilios: List<Utensilio> = emptyList(),
+    val colecciones: List<Coleccion> = emptyList(),
     val version: Int = 1,
     val app: String = "Recetitas en familia - creada por peter1323",
 )

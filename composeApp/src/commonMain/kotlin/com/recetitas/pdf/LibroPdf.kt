@@ -22,9 +22,9 @@ fun crearPdf(
     fotosPasos: Boolean,
     leerFoto: (String) -> ByteArray?,
     /** Nombre de una receta vinculada en un paso (puede no estar entre las que van en el PDF). */
-    nombreReceta: (String) -> String? = { id -> recetas.find { it.id == id }?.nombre },
+    nombreReceta: (String) -> String? = { id -> recetas.find { it.id == id }?.titulo() },
 ): ByteArray {
-    val ordenadas = recetas.sortedWith(compareBy({ it.categoria.ordinal }, { it.nombre.lowercase() }))
+    val ordenadas = recetas.sortedWith(compareBy({ it.categoria.ordinal }, { it.titulo().lowercase() }))
     val libro = ordenadas.size > 1
 
     // Se reservan en blanco la portada y el índice, se maquetan las recetas (así se sabe en qué página
@@ -32,7 +32,7 @@ fun crearPdf(
     val categorias = ordenadas.map { it.categoria }.distinct().size
     val paginasIndice = if (libro) (ordenadas.size + 2 * categorias + 29) / 30 else 0
 
-    val pdf = Pdf(if (libro) "Recetitas en familia" else ordenadas.firstOrNull()?.nombre ?: "Receta")
+    val pdf = Pdf(if (libro) "Recetitas en familia" else ordenadas.firstOrNull()?.titulo() ?: "Receta")
     if (libro) repeat(1 + paginasIndice) { pdf.nuevaPagina() }
     val inicio = mutableMapOf<String, Int>()
     for (r in ordenadas) {
@@ -76,7 +76,7 @@ private fun indice(pdf: Pdf, recetas: List<Receta>, inicio: Map<String, Int>, pa
         }
         if (y > pdf.alto - MARGEN) pagina()
         val num = inicio.getValue(r.id).toString()
-        val nombre = r.nombre.ifBlank { "Sin nombre" }
+        val nombre = r.titulo().ifBlank { "Sin nombre" }
         pdf.texto(nombre, MARGEN + 12, y, 12f)
         pdf.texto(num, pdf.ancho - MARGEN - pdf.anchoTexto(num, 12f), y, 12f, Fuente.NORMAL, GRIS)
         y += 20
@@ -115,14 +115,14 @@ private class Maquetador(val pdf: Pdf, val leerFoto: (String) -> ByteArray?, val
             val h = 230f
             pdf.imagen(foto, MARGEN, y, anchoUtil, h)
             // Nombre encima de la foto, sobre una franja oscura
-            val lineas = pdf.partir(r.nombre, 22f, anchoUtil - 24, Fuente.NEGRITA)
+            val lineas = pdf.partir(r.titulo(), 22f, anchoUtil - 24, Fuente.NEGRITA)
             val franja = 16f + lineas.size * 27f
             pdf.rect(MARGEN, y + h - franja, anchoUtil, franja, 0x2C2C2A, opaco = false)
             var ty = y + h - franja + 8
             lineas.forEach { ty += 22f; pdf.texto(it, MARGEN + 12, ty, 22f, Fuente.NEGRITA, 0xFFFFFF); ty += 5f }
             y += h + 14
         } else {
-            parrafo(r.nombre.ifBlank { "Sin nombre" }, 24f, Fuente.NEGRITA, TEJA)
+            parrafo(r.titulo().ifBlank { "Sin nombre" }, 24f, Fuente.NEGRITA, TEJA)
             y += 6
         }
         val datos = listOfNotNull(

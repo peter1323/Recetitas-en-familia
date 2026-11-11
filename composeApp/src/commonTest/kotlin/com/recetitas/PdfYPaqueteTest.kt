@@ -75,6 +75,29 @@ class PdfYPaqueteTest {
         assertEquals(2, repo.conVinculadas(listOf(ensaladilla)).size)
     }
 
+    @Test fun versionesSeAgrupanPorNombre() {
+        val grupos = com.recetitas.ui.agruparVersiones(listOf(
+            Receta(nombre = "Empanada de atún", version = "Con huevo"),
+            Receta(nombre = "Flan"),
+            Receta(nombre = "empanada de atun ", version = "De la abuela"),
+            Receta(nombre = "Empanada de atún"),
+        ))
+        assertEquals(listOf(3, 1), grupos.map { it.size })
+        // La versión sin etiqueta va primero, luego por orden alfabético
+        assertEquals(listOf("", "Con huevo", "De la abuela"), grupos[0].map { it.version })
+        assertEquals("Empanada de atún (Con huevo)", grupos[0][1].titulo())
+    }
+
+    @Test fun borrarRecetaLaQuitaDeLasColecciones() {
+        val repo = Repositorio(Path(carpetaTemporal(), "colecciones-${flan.id}").toString())
+        repo.guardarReceta(flan)
+        repo.guardarColeccion(com.recetitas.model.Coleccion(id = "mias", nombre = "Mis recetas", recetas = listOf(flan.id)))
+        repo.borrarReceta(flan.id)
+        assertEquals(emptyList(), repo.colecciones.value.single().recetas)
+        // Se guarda en disco: otro repositorio sobre la misma carpeta la lee igual
+        assertEquals("Mis recetas", Repositorio(Path(carpetaTemporal(), "colecciones-${flan.id}").toString()).colecciones.value.single().nombre)
+    }
+
     @Test fun limpiarFotosSoloBorraHuerfanas() {
         val repo = Repositorio(Path(carpetaTemporal(), "limpiar-${flan.id}").toString())
         val usada = repo.guardarFoto(byteArrayOf(1))

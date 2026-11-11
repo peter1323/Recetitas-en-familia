@@ -40,10 +40,12 @@ import kotlinx.io.write
 
 sealed interface Pantalla {
     data object Inicio : Pantalla
-    /** categoria == null: todas, o solo favoritas si [favoritas]. */
-    data class Lista(val categoria: Categoria?, val favoritas: Boolean = false) : Pantalla
+    /** categoria == null: todas, o solo favoritas si [favoritas], o las de una [coleccion]. */
+    data class Lista(val categoria: Categoria?, val favoritas: Boolean = false, val coleccion: String? = null) : Pantalla
+    data object Colecciones : Pantalla
     data class VerReceta(val id: String) : Pantalla
-    data class Editor(val id: String?, val categoria: Categoria? = null) : Pantalla
+    /** id == null: receta nueva; con [versionDe], nueva versión copiada de esa receta. */
+    data class Editor(val id: String?, val categoria: Categoria? = null, val versionDe: String? = null) : Pantalla
     data object Ajustes : Pantalla
     data object Pdf : Pantalla
 }
@@ -93,10 +95,11 @@ fun App() {
             Box(Modifier.fillMaxSize()) {
                 when (actual) {
                     Pantalla.Inicio -> PantallaInicio(repo, ir)
-                    is Pantalla.Lista -> PantallaLista(repo, actual, ir, volver)
+                    is Pantalla.Lista -> key(actual) { PantallaLista(repo, actual, ir, volver) }
+                    Pantalla.Colecciones -> PantallaColecciones(repo, ir, volver)
                     // key: al saltar de una receta a otra vinculada, la nueva empieza desde arriba
                     is Pantalla.VerReceta -> key(actual.id) { PantallaReceta(repo, actual.id, ir, volver) }
-                    is Pantalla.Editor -> PantallaEditor(repo, actual.id, actual.categoria, volver = volver, alGuardar = { id ->
+                    is Pantalla.Editor -> PantallaEditor(repo, actual.id, actual.categoria, actual.versionDe, volver = volver, alGuardar = { id ->
                         // Al crear una receta nueva se pasa directamente a verla
                         volver()
                         if (actual.id == null) ir(Pantalla.VerReceta(id))

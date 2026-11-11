@@ -3,6 +3,7 @@ package com.recetitas.data
 import com.recetitas.crearZip
 import com.recetitas.extraerZip
 import com.recetitas.model.Ajustes
+import com.recetitas.model.Coleccion
 import com.recetitas.model.Paquete
 import com.recetitas.model.Receta
 import com.recetitas.model.Utensilio
@@ -76,6 +77,24 @@ class Repositorio(private val carpeta: String) {
     fun borrarReceta(id: String) {
         _recetas.value = _recetas.value.filterNot { it.id == id }
         escribir(archivoRecetas, json.encodeToString(_recetas.value))
+        _colecciones.value.filter { id in it.recetas }.forEach { guardarColeccion(it.copy(recetas = it.recetas - id)) }
+    }
+
+    // ---------- COLECCIONES ----------
+
+    private val archivoColecciones = Path(carpeta, "colecciones.json")
+    private val _colecciones = MutableStateFlow(cargar<List<Coleccion>>(archivoColecciones) ?: emptyList())
+    val colecciones: StateFlow<List<Coleccion>> = _colecciones.asStateFlow()
+
+    fun guardarColeccion(c: Coleccion) {
+        val lista = _colecciones.value
+        _colecciones.value = if (lista.any { it.id == c.id }) lista.map { if (it.id == c.id) c else it } else lista + c
+        escribir(archivoColecciones, json.encodeToString(_colecciones.value))
+    }
+
+    fun borrarColeccion(id: String) {
+        _colecciones.value = _colecciones.value.filterNot { it.id == id }
+        escribir(archivoColecciones, json.encodeToString(_colecciones.value))
     }
 
     fun guardarUtensilio(u: Utensilio) {
@@ -118,7 +137,7 @@ class Repositorio(private val carpeta: String) {
 
     // ---------- COMPARTIR / COPIAS ----------
 
-    fun nombreReceta(id: String): String? = _recetas.value.find { it.id == id }?.nombre
+    fun nombreReceta(id: String): String? = _recetas.value.find { it.id == id }?.titulo()
 
     /** Estas recetas más las que usan sus pasos (y las que usan esas...), sin repetir. */
     fun conVinculadas(recetas: List<Receta>): List<Receta> {
@@ -135,12 +154,13 @@ class Repositorio(private val carpeta: String) {
     /**
      * Crea un .receta (zip con paquete.json y sus fotos) con estas recetas y los utensilios que usan.
      * Van también las recetas vinculadas en los pasos, para que el enlace funcione a quien la recibe.
+     * [copiaCompleta]: copia de seguridad, con todos los utensilios y las colecciones.
      */
-    fun exportar(elegidas: List<Receta>, destino: String, todosLosUtensilios: Boolean = false) {
+    fun exportar(elegidas: List<Receta>, destino: String, copiaCompleta: Boolean = false) {
         val recetas = conVinculadas(elegidas)
         val ids = recetas.flatMap { it.utensilios }.toSet()
-        val utensilios = _utensilios.value.filter { todosLosUtensilios || it.id in ids }
-        val paquete = Paquete(recetas, utensilios)
+        val utensilios = _utensilios.value.filter { copiaCompleta || it.id in ids }
+        val paquete = Paquete(recetas, utensilios, if (copiaCompleta) _colecciones.value else emptyList())
         val temporal = Path(carpeta, "paquete.json")
         escribir(temporal, json.encodeToString(paquete))
         val fotos = (recetas.flatMap { it.fotos() } + utensilios.mapNotNull { it.foto }).toSet()
@@ -168,6 +188,11 @@ class Repositorio(private val carpeta: String) {
         val misUtensilios = _utensilios.value.map { it.id }.toSet()
         paquete.utensilios.filter { it.id !in misUtensilios }.forEach { guardarUtensilio(it) }
         paquete.recetas.forEach { guardarReceta(it) }
+        // Colecciones de una copia: las que ya tienes se juntan con las de la copia
+        paquete.colecciones.forEach { c ->
+            val mia = _colecciones.value.find { it.id == c.id }
+            guardarColeccion(if (mia == null) c else mia.copy(recetas = (mia.recetas + c.recetas).distinct()))
+        }
         borrarCarpeta(Path(temporal))
     }
 
@@ -176,7 +201,7 @@ class Repositorio(private val carpeta: String) {
         val a = _ajustes.value
         val hoy = Clock.System.now().toEpochMilliseconds() / 86_400_000
         if (!a.copiaDiaria || a.ultimaCopia == hoy || _recetas.value.isEmpty()) return
-        exportar(_recetas.value, Path(carpetaCopias, "copia-$hoy.receta").toString(), todosLosUtensilios = true)
+        exportar(_recetas.value, Path(carpetaCopias, "copia-$hoy.receta").toString(), copiaCompleta = true)
         guardarAjustes(a.copy(ultimaCopia = hoy))
         fs.list(carpetaCopias).sortedBy { it.name }.dropLast(7).forEach { fs.delete(it) }
     }

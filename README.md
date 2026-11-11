@@ -15,6 +15,9 @@
 
 - **Recetas por tipo**: entrantes, primeros, segundos, postres, salsas, masas y panes, y otros. También hay favoritas.
 - **Buscar por nombre**, sin importar mayúsculas ni acentos.
+- **Colecciones**: listas propias con las recetas que quieras ("Mis recetas", "Navidad"…), desde el botón *Colecciones* de abajo.
+- **Versiones de una receta**: varias formas de hacer el mismo plato (empanada de atún de la abuela, con huevo…) se agrupan en una sola tarjeta y al entrar eliges cuál cocinar. Se crean con *Crear otra versión* dentro de la receta.
+- **Recetas vinculadas**: un paso puede usar otra receta de la app (la mayonesa casera de la ensaladilla) y un botón te lleva a ella.
 - **Foto del plato con el nombre encima**, hecha con la cámara o elegida de la galería.
 - **Raciones**: eliges para cuántas personas y las cantidades se recalculan solas (200 g → 300 g). Los huevos salen enteros, y "sal al gusto" se queda igual.
 - **Pasos con fuego y tiempo**: vitro (1-12), gas (bajo, medio, alto) u horno (temperatura y modo), por ejemplo "Vitro 6 · 3 min".

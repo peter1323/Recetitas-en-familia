@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -24,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Favorite
@@ -36,6 +39,7 @@ import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -77,6 +81,7 @@ fun escribirTemporal(nombre: String, bytes: ByteArray): String {
     return ruta.toString()
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver: () -> Unit) {
     val recetas by repo.recetas.collectAsState()
@@ -94,7 +99,7 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
         LazyColumn(Modifier.widthIn(max = 800.dp).fillMaxSize().padding(horizontal = 16.dp)) {
             item {
                 Box(Modifier.padding(top = 8.dp)) {
-                    FotoConNombre(repo, r.foto, r.nombre, Modifier.fillMaxWidth().height(240.dp), tam = 24) {
+                    FotoConNombre(repo, r.foto, r.titulo(), Modifier.fillMaxWidth().height(240.dp), tam = 24) {
                         r.foto?.let { visor = Triple(it, r.nombre, "") }
                     }
                     BotonRedondo(Icons.AutoMirrored.Outlined.ArrowBack, "Volver", volver, Modifier.align(Alignment.TopStart))
@@ -112,6 +117,16 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
                 val datos = listOfNotNull(r.categoria.nombre, r.autor.takeIf { it.isNotBlank() }?.let { "Receta de $it" }, r.tiempo.takeIf { it.isNotBlank() })
                 Text(datos.joinToString("  ·  "), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
                 SelectorRaciones(raciones) { raciones = it }
+                // Otras versiones del mismo plato, para cambiar de una a otra
+                val otras = agruparVersiones(recetas).find { g -> g.any { it.id == r.id } }.orEmpty()
+                if (otras.size > 1) {
+                    Text("Versiones", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        otras.forEachIndexed { i, v ->
+                            FilterChip(v.id == r.id, { if (v.id != r.id) ir(Pantalla.VerReceta(v.id)) }, label = { Text(nombreVersion(v, i)) })
+                        }
+                    }
+                }
             }
 
             val misUtensilios = r.utensilios.mapNotNull { u -> utensilios.find { it.id == u } }
@@ -175,6 +190,10 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
                             Icon(Icons.Outlined.MenuBook, null); Text("  Original")
                         }
                     }
+                    // Copia esta receta como otra versión del mismo plato (empanada de la abuela, con huevo...)
+                    OutlinedButton({ ir(Pantalla.Editor(null, versionDe = r.id)) }, Modifier.fillMaxWidth().height(52.dp)) {
+                        Icon(Icons.Outlined.ContentCopy, null); Text("  Crear otra versión")
+                    }
                 }
             }
         }
@@ -191,7 +210,7 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
 
     if (menuCompartir) Aviso(
         onDismissRequest = { menuCompartir = false },
-        title = { Text("Compartir \"${r.nombre}\"") },
+        title = { Text("Compartir \"${r.titulo()}\"") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button({
@@ -216,7 +235,7 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
 
     if (confirmarBorrar) Aviso(
         onDismissRequest = { confirmarBorrar = false },
-        title = { Text("¿Borrar \"${r.nombre}\"?") },
+        title = { Text("¿Borrar \"${r.titulo()}\"?") },
         text = { Text("Se borra de este dispositivo. Las copias de seguridad de días anteriores la siguen teniendo.") },
         confirmButton = {
             Button({ confirmarBorrar = false; volver(); repo.borrarReceta(r.id) }) { Text("Borrar") }

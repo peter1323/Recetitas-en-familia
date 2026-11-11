@@ -75,11 +75,17 @@ import com.recetitas.model.Paso
 import com.recetitas.model.Receta
 import com.recetitas.model.TipoFuego
 import com.recetitas.model.Utensilio
+import com.recetitas.model.nuevoId
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun PantallaEditor(repo: Repositorio, id: String?, categoria: Categoria?, volver: () -> Unit, alGuardar: (String) -> Unit) {
-    val original = remember(id) { repo.recetas.value.find { it.id == id } ?: Receta(categoria = categoria ?: Categoria.PRIMEROS, ingredientes = listOf("")) }
+fun PantallaEditor(repo: Repositorio, id: String?, categoria: Categoria?, versionDe: String?, volver: () -> Unit, alGuardar: (String) -> Unit) {
+    val original = remember(id) {
+        repo.recetas.value.find { it.id == id }
+            // Nueva versión: copia de la otra con el mismo nombre, para cambiar solo lo que sea distinto
+            ?: repo.recetas.value.find { it.id == versionDe }?.copy(id = nuevoId(), version = "", favorita = false)
+            ?: Receta(categoria = categoria ?: Categoria.PRIMEROS, ingredientes = listOf(""))
+    }
     var r by remember(id) { mutableStateOf(original) }
     val utensilios by repo.utensilios.collectAsState()
     var errorNombre by remember { mutableStateOf(false) }
@@ -92,7 +98,7 @@ fun PantallaEditor(repo: Repositorio, id: String?, categoria: Categoria?, volver
 
     fun guardar() {
         if (r.nombre.isBlank()) { errorNombre = true; return }
-        val limpia = r.copy(nombre = r.nombre.trim(), ingredientes = r.ingredientes.map { it.trim() }.filter { it.isNotEmpty() })
+        val limpia = r.copy(nombre = r.nombre.trim(), version = r.version.trim(), ingredientes = r.ingredientes.map { it.trim() }.filter { it.isNotEmpty() })
         repo.guardarReceta(limpia)
         alGuardar(limpia.id)
     }
@@ -100,7 +106,7 @@ fun PantallaEditor(repo: Repositorio, id: String?, categoria: Categoria?, volver
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (id == null) "Nueva receta" else "Editar receta") },
+                title = { Text(if (versionDe != null) "Nueva versión" else if (id == null) "Nueva receta" else "Editar receta") },
                 navigationIcon = { IconButton(intentarVolver) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Volver") } },
                 actions = { TextButton(::guardar) { Text("Guardar", style = MaterialTheme.typography.titleMedium) } },
             )
@@ -118,6 +124,10 @@ fun PantallaEditor(repo: Repositorio, id: String?, categoria: Categoria?, volver
 
                 CampoTexto(r.nombre, { r = r.copy(nombre = it); errorNombre = false }, "Nombre de la receta")
                 if (errorNombre) Text("Ponle un nombre a la receta.", color = MaterialTheme.colorScheme.error)
+                Espacio(8)
+                CampoTexto(r.version, { r = r.copy(version = it) }, "Versión (De la abuela, Con huevo...)")
+                Text("Si tienes varias formas de hacer este plato, usa el mismo nombre y dale a cada una su versión. Se agrupan y al entrar eliges cuál cocinar.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                 Seccion("Tipo")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

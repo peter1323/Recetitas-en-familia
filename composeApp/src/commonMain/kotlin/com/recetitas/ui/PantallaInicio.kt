@@ -28,7 +28,7 @@ import androidx.compose.material.icons.outlined.DinnerDining
 import androidx.compose.material.icons.outlined.Blender
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.MenuBook
-import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material.icons.outlined.CollectionsBookmark
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
@@ -99,17 +99,16 @@ fun PantallaInicio(repo: Repositorio, ir: (Pantalla) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             if (busqueda.isNotBlank()) {
-                val encontradas = recetas.filter { coincide(it, busqueda) }.sortedBy { it.nombre.lowercase() }
+                val encontradas = agruparVersiones(recetas.filter { coincide(it, busqueda) })
                 if (encontradas.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) {
                     Text("No hay ninguna receta que se llame así.", Modifier.padding(16.dp))
                 }
-                items(encontradas, key = { it.id }) { r ->
-                    FotoConNombre(repo, r.foto, r.nombre, Modifier.fillMaxWidth().height(150.dp)) { ir(Pantalla.VerReceta(r.id)) }
-                }
+                items(encontradas, key = { it.first().id }) { versiones -> TarjetaPlato(repo, versiones, ir) }
             } else {
-                item { Cuadro("Todas", Icons.Outlined.MenuBook, recetas.size) { ir(Pantalla.Lista(null)) } }
+                // Se cuentan platos: las versiones de un mismo plato cuentan como uno
+                item { Cuadro("Todas", Icons.Outlined.MenuBook, agruparVersiones(recetas).size) { ir(Pantalla.Lista(null)) } }
                 items(Categoria.entries) { c ->
-                    Cuadro(c.nombre, c.icono(), recetas.count { it.categoria == c }) { ir(Pantalla.Lista(c)) }
+                    Cuadro(c.nombre, c.icono(), agruparVersiones(recetas.filter { it.categoria == c }).size) { ir(Pantalla.Lista(c)) }
                 }
             }
         }
@@ -119,8 +118,8 @@ fun PantallaInicio(repo: Repositorio, ir: (Pantalla) -> Unit) {
         }
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
             BotonAbajo("Favoritas", Icons.Outlined.FavoriteBorder) { ir(Pantalla.Lista(null, favoritas = true)) }
+            BotonAbajo("Colecciones", Icons.Outlined.CollectionsBookmark) { ir(Pantalla.Colecciones) }
             BotonAbajo("Utensilios", Icons.Outlined.Blender) { utensilios = true }
-            BotonAbajo("Libro PDF", Icons.Outlined.PictureAsPdf) { ir(Pantalla.Pdf) }
             BotonAbajo("Ajustes", Icons.Outlined.Settings) { ir(Pantalla.Ajustes) }
         }
     }
@@ -134,10 +133,10 @@ private fun RowScope.BotonAbajo(texto: String, icono: ImageVector, alTocar: () -
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(icono, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
-        // Tope de tamaño: con la letra "Enorme" no caben cuatro palabras en una fila del móvil
+        // Tope de tamaño: con la letra "Enorme" no caben cuatro palabras ("Colecciones" es la más larga) en una fila del móvil
         val escala = LocalDensity.current.fontScale
         Text(texto, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge,
-            fontSize = (minOf(14f * escala, 18f) / escala).sp, maxLines = 1)
+            fontSize = (minOf(14f * escala, 16f) / escala).sp, maxLines = 1)
     }
 }
 
