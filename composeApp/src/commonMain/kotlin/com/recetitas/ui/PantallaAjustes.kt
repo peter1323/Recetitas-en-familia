@@ -33,6 +33,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -48,7 +49,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalUriHandler
 import com.recetitas.AUTOR
 import com.recetitas.URL_GITHUB
+import com.recetitas.archivoRecibido
 import com.recetitas.carpetaTemporal
+import com.recetitas.model.textoFecha
 import com.recetitas.versionApp
 import com.recetitas.data.Repositorio
 import com.recetitas.model.Categoria
@@ -79,6 +82,8 @@ fun PantallaAjustes(repo: Repositorio, volver: () -> Unit, importar: () -> Unit,
     val compartir = rememberCompartir()
     val scope = rememberCoroutineScope()
     var trabajando by remember { mutableStateOf(false) }
+    var recuperar by remember { mutableStateOf(false) }
+    if (recuperar) RecuperarCopia(repo, alCerrar = { recuperar = false }, buscarFuera = { recuperar = false; importar() })
 
     Marco("Ajustes", volver) {
         Seccion("Tamaño de letra")
@@ -112,9 +117,12 @@ fun PantallaAjustes(repo: Repositorio, volver: () -> Unit, importar: () -> Unit,
         Interruptor("Pantalla siempre encendida", "Mientras ves una receta, la pantalla no se apaga.", a.pantallaEncendida) {
             repo.guardarAjustes(a.copy(pantallaEncendida = it))
         }
-        Interruptor("Copia de seguridad diaria", "Guarda cada día una copia de todas las recetas dentro de la app (las 7 últimas).", a.copiaDiaria) {
-            repo.guardarAjustes(a.copy(copiaDiaria = it))
-        }
+        Interruptor(
+            "Copia de seguridad diaria",
+            "Al abrir la app, una vez al día, guarda una copia de todo (las 7 últimas). En el móvil también en Documentos/Recetitas, que no se borra aunque se desinstale la app.",
+            a.copiaDiaria,
+        ) { repo.guardarAjustes(a.copy(copiaDiaria = it)) }
+        Fila("Recuperar una copia", "Vuelve a poner las recetas tal como estaban un día.") { recuperar = true }
         Fila("Exportar todas las recetas", "Un archivo con todo, para guardarlo fuera o pasarlo a otro móvil u ordenador.") {
             if (trabajando) return@Fila
             trabajando = true
@@ -141,6 +149,36 @@ fun PantallaAjustes(repo: Repositorio, volver: () -> Unit, importar: () -> Unit,
         }
         Espacio(24)
     }
+}
+
+/**
+ * Lista de las copias diarias. Al elegir una se abre como cualquier archivo .receta:
+ * la app pregunta "¿Guardar N recetas?" y las recetas de la copia vuelven a estar como ese día.
+ */
+@Composable
+private fun RecuperarCopia(repo: Repositorio, alCerrar: () -> Unit, buscarFuera: () -> Unit) {
+    val copias = remember { repo.copias() }
+    Aviso(
+        onDismissRequest = alCerrar,
+        title = { Text("Recuperar una copia") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (copias.isEmpty()) Text("Todavía no hay copias. Se hace una al abrir la app cada día que haya recetas.")
+                copias.forEach { (dia, ruta) ->
+                    Row(Modifier.fillMaxWidth().clickable { alCerrar(); archivoRecibido.value = ruta }.padding(vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Text("Copia del ${textoFecha(dia)}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null)
+                    }
+                    HorizontalDivider()
+                }
+                Text("Si has cambiado de móvil o reinstalado la app, busca la copia en la carpeta Documentos/Recetitas.",
+                    style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
+            }
+        },
+        confirmButton = { TextButton(buscarFuera) { Text("Buscar copia en el móvil") } },
+        dismissButton = { TextButton(alCerrar) { Text("Cerrar") } },
+    )
 }
 
 @Composable

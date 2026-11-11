@@ -24,6 +24,8 @@ import com.recetitas.MantenerPantallaEncendida
 import com.recetitas.archivoRecibido
 import com.recetitas.carpetaDatos
 import com.recetitas.carpetaTemporal
+import com.recetitas.guardarCopiaVisible
+import com.recetitas.model.fechaIso
 import com.recetitas.data.Repositorio
 import com.recetitas.model.Categoria
 import com.recetitas.model.Paquete
@@ -63,7 +65,11 @@ fun App() {
     LaunchedEffect(Unit) {
         withContext(Dispatchers.Default) {
             runCatching { repo.limpiarFotos() }
-            runCatching { repo.copiaDiariaSiToca() }
+            runCatching {
+                val ruta = repo.copiaDiariaSiToca() ?: return@runCatching
+                val hoy = ruta.substringAfterLast("copia-").removeSuffix(".receta").toLong()
+                guardarCopiaVisible(ruta, "Recetitas copia ${fechaIso(hoy)}.receta")
+            }
         }
     }
 

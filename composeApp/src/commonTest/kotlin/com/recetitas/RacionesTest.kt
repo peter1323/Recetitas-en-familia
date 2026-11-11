@@ -13,5 +13,10 @@ class RacionesTest {
     @Test fun medios() = assertEquals("1½ cucharadas de aceite", escalarIngrediente("1 cucharadas de aceite", 2, 3))
     @Test fun sinNumero() = assertEquals("Sal al gusto", escalarIngrediente("Sal al gusto", 4, 8))
     @Test fun comaDecimal() = assertEquals("3 kg de patatas", escalarIngrediente("1,5 kg de patatas", 2, 4))
+    @Test fun fechas() {
+        assertEquals("1/1/1970", com.recetitas.model.textoFecha(0))
+        assertEquals("29/2/2024", com.recetitas.model.textoFecha(19782))
+        assertEquals("2026-11-11", com.recetitas.model.fechaIso(20768))
+    }
     @Test fun igualSinCambios() = assertEquals("200 g", escalarIngrediente("200 g", 4, 4))
 }

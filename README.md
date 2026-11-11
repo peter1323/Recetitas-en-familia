@@ -47,7 +47,7 @@
 - **De quién es la receta** (abuela, mamá, la tía…).
 - **Compartir con alguien**: el botón *Compartir → Compartir con alguien* envía un archivo `.receta` por WhatsApp. Quien lo recibe lo toca, la app pregunta "¿Guardar…?" y se guarda sola, con fotos incluidas.
 - **PDF**: una receta suelta para enviar o imprimir, o el libro entero ordenado por tipo, con portada e índice.
-- **Copia de seguridad diaria** automática (guarda las 7 últimas) y opción de *Exportar todas las recetas* a un archivo.
+- **Copia de seguridad diaria** automática al abrir la app (guarda las 7 últimas). En el móvil se guarda también en *Documentos/Recetitas*, que no se borra aunque se desinstale la app. Desde *Ajustes → Recuperar una copia* se vuelve a dejar todo como estaba un día. También se puede *Exportar todas las recetas* a un archivo.
 - **Pensada para usarla con facilidad**: letra grande desde el principio (4 tamaños), botones grandes, tema claro, oscuro o automático, y la pantalla no se apaga mientras ves una receta (se puede quitar en Ajustes).
 - **Dictado por voz** en ingredientes, pasos y notas (en el móvil).
 - **Actualizaciones**: *Ajustes → Buscar actualizaciones* abre la página de [versiones](https://github.com/peter1323/Recetitas-en-familia/releases) en GitHub. La versión instalada aparece en *Ajustes → Acerca de*.
@@ -84,7 +84,7 @@ Para probarla sin instalar:
 
 | | Carpeta |
 |---|---|
-| Android | Dentro de la app (se borra si se desinstala: usa *Exportar todas las recetas* antes). |
+| Android | Dentro de la app (se borra si se desinstala). Las copias diarias van también a *Documentos/Recetitas*, que se conserva. |
 | Windows | `C:\Users\<usuario>\RecetitasEnFamilia` |
 
 Dentro hay `recetas.json`, `utensilios.json`, `ajustes.json`, la carpeta `fotos` y la carpeta `copias` con las copias diarias. Un archivo `.receta` es un `.zip` con `paquete.json` y sus fotos.

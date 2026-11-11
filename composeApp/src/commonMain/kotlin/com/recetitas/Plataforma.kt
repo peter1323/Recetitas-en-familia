@@ -23,6 +23,12 @@ expect fun crearZip(destino: String, entradas: Map<String, String>)
 /** Saca todo el .zip a [carpeta]. Ignora nombres peligrosos ("../"). */
 expect fun extraerZip(origen: String, carpeta: String)
 
+/**
+ * Guarda además la copia diaria en una carpeta visible que no se borra al desinstalar la app
+ * (en el móvil, Documentos/Recetitas). Devuelve dónde, o null si la plataforma no lo necesita.
+ */
+expect fun guardarCopiaVisible(ruta: String, nombre: String): String?
+
 /** Abre el menú de compartir del móvil (WhatsApp...) o, en Windows, pregunta dónde guardar. */
 @Composable
 expect fun rememberCompartir(): (ruta: String, nombre: String) -> Unit

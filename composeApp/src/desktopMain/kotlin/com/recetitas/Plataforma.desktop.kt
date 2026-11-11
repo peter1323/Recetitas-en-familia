@@ -42,6 +42,9 @@ actual fun prepararFoto(bytes: ByteArray): ByteArray? = runCatching {
 // jpackage pone esta propiedad al empaquetar; con "gradlew run" no existe
 actual fun versionApp(): String? = System.getProperty("jpackage.app-version")
 
+// En Windows la carpeta de datos ya está a la vista (C:\Users\<usuario>\RecetitasEnFamilia\copias)
+actual fun guardarCopiaVisible(ruta: String, nombre: String): String? = null
+
 actual fun crearZip(destino: String, entradas: Map<String, String>) = zipear(destino, entradas)
 actual fun extraerZip(origen: String, carpeta: String) = deszipear(origen, carpeta)
 

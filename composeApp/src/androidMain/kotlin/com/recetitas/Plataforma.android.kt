@@ -1,6 +1,11 @@
 package com.recetitas
 
 import android.app.Activity
+import android.content.ContentUris
+import android.content.ContentValues
+import android.content.Context
+import android.os.Build
+import android.provider.MediaStore
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -36,6 +41,7 @@ import java.util.zip.ZipOutputStream
 private lateinit var carpetaAndroid: String
 private lateinit var cacheAndroid: String
 private var versionAndroid: String? = null
+private lateinit var contexto: Context
 
 actual fun versionApp(): String? = versionAndroid
 
@@ -43,6 +49,7 @@ actual fun versionApp(): String? = versionAndroid
 fun iniciarAndroid(activity: ComponentActivity) {
     carpetaAndroid = activity.filesDir.path
     cacheAndroid = activity.cacheDir.path
+    contexto = activity.applicationContext
     versionAndroid = runCatching { activity.packageManager.getPackageInfo(activity.packageName, 0).versionName }.getOrNull()
     FileKit.init(activity)
 }
@@ -89,6 +96,30 @@ actual fun prepararFoto(bytes: ByteArray): ByteArray? = runCatching {
     }
     ByteArrayOutputStream().also { bmp.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
 }.getOrNull()
+
+private const val CARPETA_VISIBLE = "Documents/Recetitas/"
+
+actual fun guardarCopiaVisible(ruta: String, nombre: String): String? {
+    // shortcut: en Android 9 o anterior haría falta pedir permiso de almacenamiento; ahí solo queda la copia interna
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
+    val cr = contexto.contentResolver
+    val coleccion = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+    val valores = ContentValues().apply {
+        put(MediaStore.MediaColumns.DISPLAY_NAME, nombre)
+        put(MediaStore.MediaColumns.MIME_TYPE, "application/octet-stream")
+        put(MediaStore.MediaColumns.RELATIVE_PATH, CARPETA_VISIBLE)
+    }
+    val uri = cr.insert(coleccion, valores) ?: return null
+    cr.openOutputStream(uri)!!.use { salida -> File(ruta).inputStream().use { it.copyTo(salida) } }
+    // Se dejan las 7 últimas. Solo se ven (y se borran) las que ha creado esta instalación:
+    // las de antes de reinstalar se quedan, que es justo lo que se quiere.
+    cr.query(coleccion, arrayOf(MediaStore.MediaColumns._ID), "${MediaStore.MediaColumns.RELATIVE_PATH}=?",
+        arrayOf(CARPETA_VISIBLE), "${MediaStore.MediaColumns.DISPLAY_NAME} DESC")?.use { c ->
+        var i = 0
+        while (c.moveToNext()) if (i++ >= 7) cr.delete(ContentUris.withAppendedId(coleccion, c.getLong(0)), null, null)
+    }
+    return "Documentos/Recetitas"
+}
 
 actual fun crearZip(destino: String, entradas: Map<String, String>) {
     ZipOutputStream(File(destino).outputStream().buffered()).use { zip ->

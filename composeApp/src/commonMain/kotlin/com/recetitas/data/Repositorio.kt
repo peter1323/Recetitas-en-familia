@@ -197,14 +197,22 @@ class Repositorio(private val carpeta: String) {
     }
 
     /** Copia diaria automática en carpeta/copias. Guarda las 7 últimas. */
-    fun copiaDiariaSiToca() {
+    /** Devuelve la ruta de la copia recién hecha, o null si hoy no tocaba. */
+    fun copiaDiariaSiToca(): String? {
         val a = _ajustes.value
         val hoy = Clock.System.now().toEpochMilliseconds() / 86_400_000
-        if (!a.copiaDiaria || a.ultimaCopia == hoy || _recetas.value.isEmpty()) return
-        exportar(_recetas.value, Path(carpetaCopias, "copia-$hoy.receta").toString(), copiaCompleta = true)
+        if (!a.copiaDiaria || a.ultimaCopia == hoy || _recetas.value.isEmpty()) return null
+        val ruta = Path(carpetaCopias, "copia-$hoy.receta").toString()
+        exportar(_recetas.value, ruta, copiaCompleta = true)
         guardarAjustes(a.copy(ultimaCopia = hoy))
         fs.list(carpetaCopias).sortedBy { it.name }.dropLast(7).forEach { fs.delete(it) }
+        return ruta
     }
+
+    /** Copias diarias guardadas: (día, ruta), la más reciente primero. */
+    fun copias(): List<Pair<Long, String>> = fs.list(carpetaCopias)
+        .mapNotNull { p -> p.name.removePrefix("copia-").removeSuffix(".receta").toLongOrNull()?.let { it to p.toString() } }
+        .sortedByDescending { it.first }
 
     private fun borrarCarpeta(p: Path) {
         if (fs.metadataOrNull(p)?.isDirectory == true) fs.list(p).forEach { borrarCarpeta(it) }
