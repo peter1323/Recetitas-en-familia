@@ -26,6 +26,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -122,7 +124,7 @@ fun BotonesFoto(repo: Repositorio, alGuardar: (String) -> Unit, modifier: Modifi
 /** Foto a pantalla completa. */
 @Composable
 fun VisorFoto(repo: Repositorio, foto: String, titulo: String, pie: String = "", alCerrar: () -> Unit) {
-    Dialog(alCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialogo(alCerrar) {
         Column(Modifier.fillMaxSize().background(Color(0xFF1E1E1C)).padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(titulo, color = Color(0xFFF1EFE8), fontSize = 16.sp, modifier = Modifier.weight(1f))
@@ -168,3 +170,30 @@ fun HuecoFoto(texto: String, modifier: Modifier) {
 
 @Composable
 fun Espacio(h: Int) = Box(Modifier.height(h.dp))
+
+/** Cuántos menús o avisos hay abiertos. En Windows, Escape no vuelve atrás mientras haya alguno (solo lo cierra). */
+var dialogosAbiertos = 0
+    private set
+
+@Composable
+private fun MarcaDialogo() = DisposableEffect(Unit) {
+    dialogosAbiertos++
+    onDispose { dialogosAbiertos-- }
+}
+
+/** AlertDialog que cuenta como abierto (ver [dialogosAbiertos]). */
+@Composable
+fun Aviso(
+    onDismissRequest: () -> Unit, title: @Composable () -> Unit, text: @Composable () -> Unit,
+    confirmButton: @Composable () -> Unit, dismissButton: (@Composable () -> Unit)? = null,
+) {
+    MarcaDialogo()
+    AlertDialog(onDismissRequest = onDismissRequest, title = title, text = text, confirmButton = confirmButton, dismissButton = dismissButton)
+}
+
+/** Dialog que cuenta como abierto (ver [dialogosAbiertos]). Por defecto ocupa el ancho que necesite. */
+@Composable
+fun Dialogo(alCerrar: () -> Unit, anchoNormal: Boolean = false, contenido: @Composable () -> Unit) {
+    MarcaDialogo()
+    Dialog(alCerrar, DialogProperties(usePlatformDefaultWidth = anchoNormal), contenido)
+}

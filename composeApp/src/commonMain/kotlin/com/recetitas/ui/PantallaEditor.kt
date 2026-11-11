@@ -213,7 +213,7 @@ fun PantallaEditor(repo: Repositorio, id: String?, categoria: Categoria?, volver
         r = r.copy(utensilios = it.filter { id -> id in existen })
     }
 
-    if (salir) AlertDialog(
+    if (salir) Aviso(
         onDismissRequest = { salir = false },
         title = { Text("¿Salir sin guardar?") },
         text = { Text("Se perderán los cambios que has hecho.") },
@@ -235,7 +235,7 @@ fun EditorPaso(repo: Repositorio, idReceta: String, inicial: Paso, titulo: Strin
     var error by remember { mutableStateOf(false) }
     var elegirReceta by remember { mutableStateOf(false) }
     if (elegirReceta) SelectorReceta(repo, idReceta, alCerrar = { elegirReceta = false }) { p = p.copy(receta = it); elegirReceta = false }
-    Dialog(alCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialogo(alCerrar) {
         Surface(Modifier.widthIn(max = 700.dp).fillMaxWidth().padding(12.dp), shape = RoundedCornerShape(20.dp)) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(titulo, style = MaterialTheme.typography.headlineSmall)
@@ -300,7 +300,7 @@ fun EditorPaso(repo: Repositorio, idReceta: String, inicial: Paso, titulo: Strin
 private fun SelectorReceta(repo: Repositorio, excluir: String, alCerrar: () -> Unit, alElegir: (String) -> Unit) {
     var busqueda by remember { mutableStateOf("") }
     val lista = repo.recetas.value.filter { it.id != excluir && (busqueda.isBlank() || coincide(it, busqueda)) }.sortedBy { it.nombre.lowercase() }
-    Dialog(alCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialogo(alCerrar) {
         Surface(Modifier.widthIn(max = 700.dp).fillMaxWidth().padding(12.dp), shape = RoundedCornerShape(20.dp)) {
             Column(Modifier.padding(16.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Elegir receta", style = MaterialTheme.typography.headlineSmall)
@@ -363,7 +363,7 @@ fun SelectorUtensilios(
     var foto by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf(false) }
     var editando by remember { mutableStateOf<Utensilio?>(null) }
-    Dialog(alCerrar, DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialogo(alCerrar) {
         Surface(Modifier.widthIn(max = 700.dp).fillMaxWidth().padding(12.dp), shape = RoundedCornerShape(20.dp)) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(if (elegir) "Tus utensilios" else "Mis utensilios", style = MaterialTheme.typography.headlineSmall)
@@ -411,7 +411,7 @@ private fun EditorUtensilio(repo: Repositorio, inicial: Utensilio, alCerrar: () 
     var error by remember { mutableStateOf(false) }
     var confirmar by remember { mutableStateOf(false) }
     val usos = repo.recetas.value.count { inicial.id in it.utensilios }
-    Dialog(onDismissRequest = alCerrar) {
+    Dialogo(alCerrar, anchoNormal = true) {
         Surface(shape = RoundedCornerShape(20.dp)) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Editar utensilio", style = MaterialTheme.typography.headlineSmall)
@@ -434,7 +434,7 @@ private fun EditorUtensilio(repo: Repositorio, inicial: Utensilio, alCerrar: () 
             }
         }
     }
-    if (confirmar) AlertDialog(
+    if (confirmar) Aviso(
         onDismissRequest = { confirmar = false },
         title = { Text("¿Borrar \"${inicial.nombre}\"?") },
         text = { Text(if (usos == 0) "No lo usa ninguna receta." else "Se quitará también de ${if (usos == 1) "1 receta" else "$usos recetas"}.") },

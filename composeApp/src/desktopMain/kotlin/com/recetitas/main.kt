@@ -1,6 +1,10 @@
 package com.recetitas
 
 import androidx.compose.runtime.remember
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -20,6 +24,8 @@ fun main(args: Array<String>) {
             icon = remember { BitmapPainter(bytesAImagen(object {}.javaClass.getResourceAsStream("/icono.png")!!.readBytes())!!) },
             // Se abre ocupando toda la pantalla; al restaurarla queda en 1100x800
             state = rememberWindowState(placement = WindowPlacement.Maximized, width = 1100.dp, height = 800.dp),
+            // Escape = volver atrás (si hay un menú abierto, Escape lo cierra antes y no llega aquí)
+            onKeyEvent = { it.key == Key.Escape && it.type == KeyEventType.KeyDown && pulsarAtras() },
         ) {
             window.minimumSize = java.awt.Dimension(420, 600)
             App()

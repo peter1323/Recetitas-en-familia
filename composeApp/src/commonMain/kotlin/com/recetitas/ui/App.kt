@@ -114,7 +114,7 @@ fun App() {
                     p.recetas.size == 1 -> "¿Guardar \"${p.recetas[0].nombre}\" en tus recetas?"
                     else -> "¿Guardar ${p.recetas.size} recetas? ($nuevas nuevas, ${p.recetas.size - nuevas} se actualizan)"
                 }
-                AlertDialog(
+                Aviso(
                     onDismissRequest = { paquete = null },
                     title = { Text("Receta recibida") },
                     text = { Text(texto) },
@@ -130,7 +130,7 @@ fun App() {
                     dismissButton = { TextButton({ paquete = null }) { Text("No") } },
                 )
             }
-            if (errorImportar) AlertDialog(
+            if (errorImportar) Aviso(
                 onDismissRequest = { errorImportar = false },
                 title = { Text("No se ha podido abrir") },
                 text = { Text("Ese archivo no es una receta de Recetitas en familia.") },

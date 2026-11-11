@@ -1,7 +1,10 @@
 package com.recetitas
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import io.github.vinceglb.filekit.PlatformFile
@@ -64,8 +67,29 @@ actual fun rememberDictado(alTexto: (String) -> Unit): (() -> Unit)? = null
 @Composable
 actual fun MantenerPantallaEncendida(activo: Boolean) {}
 
+/**
+ * En Windows "atrás" es la tecla Escape (la recoge la ventana en main.kt).
+ * Cada pantalla se apunta al aparecer; la última apuntada que esté activa es la que vuelve atrás.
+ */
+private val atras = mutableListOf<State<Pair<Boolean, () -> Unit>>>()
+
+/** Lo llama la ventana al pulsar Escape. Devuelve true si alguna pantalla ha vuelto atrás. */
+fun pulsarAtras(): Boolean {
+    // Con un menú abierto, Escape solo lo cierra (lo hace el propio menú)
+    if (com.recetitas.ui.dialogosAbiertos > 0) return false
+    val (_, alVolver) = atras.lastOrNull { it.value.first }?.value ?: return false
+    alVolver()
+    return true
+}
+
 @Composable
-actual fun AtrasSistema(activo: Boolean, alVolver: () -> Unit) {}
+actual fun AtrasSistema(activo: Boolean, alVolver: () -> Unit) {
+    val estado = rememberUpdatedState(activo to alVolver)
+    DisposableEffect(Unit) {
+        atras += estado
+        onDispose { atras -= estado }
+    }
+}
 
 @Composable
 actual fun rememberCamara(alFoto: (ByteArray) -> Unit): (() -> Unit)? = null

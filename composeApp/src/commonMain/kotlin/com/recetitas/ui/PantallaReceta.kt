@@ -189,7 +189,7 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
         }
     }
 
-    if (menuCompartir) AlertDialog(
+    if (menuCompartir) Aviso(
         onDismissRequest = { menuCompartir = false },
         title = { Text("Compartir \"${r.nombre}\"") },
         text = {
@@ -202,8 +202,8 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
                         }
                         compartir(ruta, "${r.nombre.ifBlank { "receta" }}.receta")
                     }
-                }, Modifier.fillMaxWidth().height(52.dp)) { Icon(Icons.Outlined.Share, null); Text("  Pasar a la familia") }
-                Text("Se mete sola en su app al abrirla.", style = MaterialTheme.typography.bodySmall)
+                }, Modifier.fillMaxWidth().height(52.dp)) { Icon(Icons.Outlined.Share, null); Text("  Compartir con alguien") }
+                Text("Le llega la receta y se guarda sola en su app al abrirla.", style = MaterialTheme.typography.bodySmall)
                 OutlinedButton({
                     menuCompartir = false
                     scope.launch { compartir(pdfReceta(repo, r), "${r.nombre.ifBlank { "receta" }}.pdf") }
@@ -214,7 +214,7 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
         confirmButton = { TextButton({ menuCompartir = false }) { Text("Cancelar") } },
     )
 
-    if (confirmarBorrar) AlertDialog(
+    if (confirmarBorrar) Aviso(
         onDismissRequest = { confirmarBorrar = false },
         title = { Text("¿Borrar \"${r.nombre}\"?") },
         text = { Text("Se borra de este dispositivo. Las copias de seguridad de días anteriores la siguen teniendo.") },
