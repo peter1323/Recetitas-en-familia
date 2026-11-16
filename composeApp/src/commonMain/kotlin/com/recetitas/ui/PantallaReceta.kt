@@ -1,6 +1,7 @@
 package com.recetitas.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.RemoveCircleOutline
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -64,6 +66,7 @@ import com.recetitas.carpetaTemporal
 import com.recetitas.data.Repositorio
 import com.recetitas.model.Receta
 import com.recetitas.model.escalarIngrediente
+import com.recetitas.model.segundosDe
 import com.recetitas.pdf.crearPdf
 import com.recetitas.rememberCompartir
 import kotlinx.coroutines.Dispatchers
@@ -168,7 +171,11 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
                                 Icon(Icons.Outlined.Edit, "Editar paso ${i + 1}", tint = MaterialTheme.colorScheme.primary)
                             }
                         }
-                        paso.etiqueta()?.let { EtiquetaFuego(it) }
+                        // Tocar la etiqueta con tiempo ("3 min") pone en marcha el temporizador
+                        paso.etiqueta()?.let { etiqueta ->
+                            val segundos = segundosDe(paso.tiempo)
+                            EtiquetaFuego(etiqueta, segundos?.let { s -> { Temporizadores.empezar("${r.id}-$i", "Paso ${i + 1} · ${r.titulo()}", s) } })
+                        }
                         recetas.find { it.id == paso.receta }?.let { otra ->
                             OutlinedButton({ ir(Pantalla.VerReceta(otra.id)) }) {
                                 Icon(Icons.Outlined.MenuBook, null); Text("  Ver receta: ${otra.nombre}")
@@ -265,14 +272,19 @@ fun SelectorRaciones(valor: Int, alCambiar: (Int) -> Unit) {
     }
 }
 
+/** Etiqueta "Vitro 6 · 3 min". Si se puede tocar, empieza el temporizador del paso. */
 @Composable
-fun EtiquetaFuego(texto: String) {
+fun EtiquetaFuego(texto: String, alTocar: (() -> Unit)? = null) {
     Row(
-        Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.tertiaryContainer).padding(horizontal = 10.dp, vertical = 4.dp),
+        Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.tertiaryContainer)
+            .then(if (alTocar != null) Modifier.clickable(onClick = alTocar) else Modifier)
+            .padding(horizontal = 10.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(Icons.Outlined.LocalFireDepartment, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onTertiaryContainer)
         Text(" $texto", color = MaterialTheme.colorScheme.onTertiaryContainer, style = MaterialTheme.typography.labelLarge)
+        if (alTocar != null) Icon(Icons.Outlined.Timer, "Empezar temporizador", Modifier.padding(start = 8.dp).size(20.dp),
+            tint = MaterialTheme.colorScheme.onTertiaryContainer)
     }
 }
 

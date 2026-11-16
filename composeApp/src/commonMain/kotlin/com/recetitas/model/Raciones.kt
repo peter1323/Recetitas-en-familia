@@ -34,6 +34,25 @@ fun escalarIngrediente(linea: String, de: Int, a: Int): String {
     return texto + resto
 }
 
+private val HORAS = Regex("""(\d+(?:[.,]\d+)?)\s*(?:h|hora|horas)\b""", RegexOption.IGNORE_CASE)
+private val MINUTOS = Regex("""(\d+(?:[.,]\d+)?)\s*(?:min|mins|minuto|minutos)\b""", RegexOption.IGNORE_CASE)
+private val SEGUNDOS = Regex("""(\d+)\s*(?:s|seg|segs|segundo|segundos)\b""", RegexOption.IGNORE_CASE)
+
+/** Segundos que indica el tiempo de un paso ("1 h 30 min", "4 min por lado"), o null si no hay ("toda la noche"). */
+fun segundosDe(tiempo: String): Int? {
+    fun suma(r: Regex, factor: Int) = r.findAll(tiempo).sumOf { (it.groupValues[1].replace(',', '.').toDouble() * factor).toInt() }
+    val total = suma(HORAS, 3600) + suma(MINUTOS, 60) + suma(SEGUNDOS, 1)
+    return total.takeIf { it > 0 }
+}
+
+/** 185 -> "3:05", 3725 -> "1:02:05" */
+fun textoCuentaAtras(segundos: Long): String {
+    val s = segundos.coerceAtLeast(0)
+    val (h, m, seg) = Triple(s / 3600, s % 3600 / 60, s % 60)
+    fun dos(n: Long) = n.toString().padStart(2, '0')
+    return if (h > 0) "$h:${dos(m)}:${dos(seg)}" else "$m:${dos(seg)}"
+}
+
 /** Día contado desde el 1/1/1970 → (año, mes, día). Algoritmo de calendario civil de H. Hinnant. */
 fun fechaDeDia(dia: Long): Triple<Int, Int, Int> {
     val z = dia + 719468

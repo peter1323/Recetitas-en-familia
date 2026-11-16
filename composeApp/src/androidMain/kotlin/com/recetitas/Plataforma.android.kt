@@ -4,7 +4,12 @@ import android.app.Activity
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
+import android.media.AudioAttributes
+import android.media.MediaPlayer
+import android.media.RingtoneManager
 import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.provider.MediaStore
 import android.content.Intent
 import android.graphics.Bitmap
@@ -179,6 +184,30 @@ actual fun MantenerPantallaEncendida(activo: Boolean) {
     DisposableEffect(activo) {
         vista.keepScreenOn = activo
         onDispose { vista.keepScreenOn = false }
+    }
+}
+
+// Sonido de alarma del móvil en bucle y vibración, como un despertador
+actual fun sonarAlarma(): () -> Unit {
+    val sonido = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM) ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+    val reproductor = runCatching {
+        MediaPlayer().apply {
+            setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+            setDataSource(contexto, sonido)
+            isLooping = true
+            prepare()
+            start()
+        }
+    }.getOrNull()
+    @Suppress("DEPRECATION")
+    val vibrador = contexto.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+    runCatching {
+        if (Build.VERSION.SDK_INT >= 26) vibrador?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 600, 400), 0))
+        else @Suppress("DEPRECATION") vibrador?.vibrate(longArrayOf(0, 600, 400), 0)
+    }
+    return {
+        runCatching { reproductor?.stop(); reproductor?.release() }
+        runCatching { vibrador?.cancel() }
     }
 }
 

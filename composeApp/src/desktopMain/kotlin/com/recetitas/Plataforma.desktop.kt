@@ -73,6 +73,15 @@ actual fun MantenerPantallaEncendida(activo: Boolean) {}
 @Composable
 actual fun ColorBarras(oscuro: Boolean) {}
 
+// En Windows: el pitido del sistema cada segundo hasta que se pare
+actual fun sonarAlarma(): () -> Unit {
+    var sonando = true
+    Thread {
+        while (sonando) { java.awt.Toolkit.getDefaultToolkit().beep(); Thread.sleep(1000) }
+    }.apply { isDaemon = true; start() }
+    return { sonando = false }
+}
+
 /**
  * En Windows "atrás" es la tecla Escape (la recoge la ventana en main.kt).
  * Cada pantalla se apunta al aparecer; la última apuntada que esté activa es la que vuelve atrás.

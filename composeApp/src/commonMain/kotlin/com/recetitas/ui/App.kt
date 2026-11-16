@@ -2,6 +2,9 @@ package com.recetitas.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -114,6 +117,8 @@ fun App() {
                     Pantalla.Ajustes -> PantallaAjustes(repo, volver, importar = { selectorImportar.launch() }, ir = ir)
                     Pantalla.Pdf -> PantallaPdf(repo, volver)
                 }
+                // Temporizadores de los pasos: se ven en todas las pantallas
+                CapaTemporizadores(Modifier.align(Alignment.BottomCenter).padding(bottom = 110.dp))
             }
 
             paquete?.let { p ->

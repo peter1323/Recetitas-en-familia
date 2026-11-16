@@ -40,6 +40,9 @@ expect fun rememberDictado(alTexto: (String) -> Unit): (() -> Unit)?
 @Composable
 expect fun MantenerPantallaEncendida(activo: Boolean)
 
+/** Hace sonar la alarma (y vibrar en el móvil) hasta que se llame a la función que devuelve. */
+expect fun sonarAlarma(): () -> Unit
+
 /** Iconos de la barra de arriba del móvil (hora, batería) oscuros con tema claro y blancos con tema oscuro. */
 @Composable
 expect fun ColorBarras(oscuro: Boolean)
