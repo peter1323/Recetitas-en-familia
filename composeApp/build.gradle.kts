@@ -64,6 +64,7 @@ compose.desktop {
             windows {
                 iconFile.set(project.file("icono.ico"))
                 menu = true
+                menuGroup = "Recetitas en familia"
                 shortcut = true
                 dirChooser = true
                 upgradeUuid = "8f2d6a41-3c7e-4b19-a5d2-6e0f9c3b7a14"
