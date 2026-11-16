@@ -144,12 +144,15 @@ fun VisorFoto(repo: Repositorio, foto: String, titulo: String, pie: String = "",
 fun CampoTexto(
     valor: String, alCambiar: (String) -> Unit, etiqueta: String,
     modifier: Modifier = Modifier, lineas: Int = 1, dictar: Boolean = false,
+    alAceptar: (() -> Unit)? = null,
 ) {
     val dictado = if (dictar) rememberDictado { alCambiar(if (valor.isBlank()) it else "$valor $it") } else null
     OutlinedTextField(
         valor, alCambiar, modifier.fillMaxWidth(),
         label = { Text(etiqueta) },
         singleLine = lineas == 1, minLines = lineas,
+        keyboardOptions = if (alAceptar != null) androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Done) else androidx.compose.foundation.text.KeyboardOptions.Default,
+        keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { alAceptar?.invoke() }),
         trailingIcon = dictado?.let { { IconButton(it) { Icon(Icons.Outlined.Mic, "Dictar") } } },
     )
 }

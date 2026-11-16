@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -64,7 +65,7 @@ fun PantallaCompra(repo: Repositorio, ir: (Pantalla) -> Unit, volver: () -> Unit
         TopAppBar(title = { Text("Lista de la compra") },
             navigationIcon = { IconButton(volver) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Volver") } })
     }) { relleno ->
-        Box(Modifier.fillMaxSize().padding(relleno), contentAlignment = Alignment.TopCenter) {
+        Box(Modifier.fillMaxSize().padding(relleno).imePadding(), contentAlignment = Alignment.TopCenter) {
             Column(Modifier.widthIn(max = 700.dp).fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
                 if (elegidas.isEmpty() && lista.extra.isEmpty()) Text(
                     "La lista está vacía. Dentro de una receta, pulsa \"Añadir a la lista de la compra\" y aquí se juntan los ingredientes de todas.",
@@ -101,11 +102,10 @@ fun PantallaCompra(repo: Repositorio, ir: (Pantalla) -> Unit, volver: () -> Unit
                 }
 
                 Seccion("Añadir otra cosa")
+                val anadir = { if (nueva.isNotBlank()) { repo.guardarCompra(lista.copy(extra = lista.extra + nueva.trim())); nueva = "" } }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    CampoTexto(nueva, { nueva = it }, "Papel de cocina, pan...", Modifier.weight(1f), dictar = true)
-                    IconButton({
-                        if (nueva.isNotBlank()) { repo.guardarCompra(lista.copy(extra = lista.extra + nueva.trim())); nueva = "" }
-                    }) { Icon(Icons.Outlined.Add, "Añadir a la lista") }
+                    CampoTexto(nueva, { nueva = it }, "Papel de cocina, pan...", Modifier.weight(1f), dictar = true, alAceptar = anadir)
+                    IconButton(anadir) { Icon(Icons.Outlined.Add, "Añadir a la lista") }
                 }
 
                 if (ingredientes.isNotEmpty()) {

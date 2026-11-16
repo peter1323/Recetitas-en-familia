@@ -24,6 +24,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.core.view.WindowCompat
 import androidx.compose.runtime.remember
@@ -226,8 +227,10 @@ actual fun sonarAlarma(): () -> Unit {
 @Composable
 actual fun ColorBarras(oscuro: Boolean) {
     val vista = LocalView.current
-    SideEffect {
-        val ventana = (vista.context as? Activity)?.window ?: return@SideEffect
+    // Con configChanges el sistema rehace las barras al cambiar claro/oscuro: hay que volver a ponerlas
+    val modoSistema = androidx.compose.ui.platform.LocalConfiguration.current.uiMode
+    LaunchedEffect(oscuro, modoSistema) {
+        val ventana = (vista.context as? Activity)?.window ?: return@LaunchedEffect
         WindowCompat.getInsetsController(ventana, vista).apply {
             isAppearanceLightStatusBars = !oscuro
             isAppearanceLightNavigationBars = !oscuro
