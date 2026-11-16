@@ -77,10 +77,10 @@ fun CapaTemporizadores(modifier: Modifier = Modifier) {
         }
     }
 
-    Column(modifier.widthIn(max = 500.dp).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         activos.forEach { t ->
             Row(
-                Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.tertiaryContainer).padding(start = 14.dp),
+                Modifier.widthIn(max = 500.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.tertiaryContainer).padding(start = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.Outlined.Timer, null, tint = MaterialTheme.colorScheme.onTertiaryContainer)

@@ -27,6 +27,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.AddShoppingCart
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.CollectionsBookmark
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
@@ -95,7 +98,10 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
     var pasoEditando by remember { mutableStateOf<Int?>(null) }
     var menuCompartir by remember { mutableStateOf(false) }
     var confirmarBorrar by remember { mutableStateOf(false) }
+    var elegirColecciones by remember { mutableStateOf(false) }
+    val compra by repo.compra.collectAsState()
     val compartir = rememberCompartir()
+    if (elegirColecciones) ColeccionesDeReceta(repo, id) { elegirColecciones = false }
     val scope = rememberCoroutineScope()
 
     Box(Modifier.fillMaxSize().safeDrawingPadding(), contentAlignment = Alignment.TopCenter) {
@@ -196,6 +202,15 @@ fun PantallaReceta(repo: Repositorio, id: String, ir: (Pantalla) -> Unit, volver
                         if (r.fotoOriginal != null) OutlinedButton({ visor = Triple(r.fotoOriginal, "Receta original", "") }, Modifier.weight(1f).height(52.dp)) {
                             Icon(Icons.Outlined.MenuBook, null); Text("  Original")
                         }
+                    }
+                    // A la lista de la compra con las personas elegidas arriba
+                    val enLista = compra.recetas.find { it.receta == r.id }?.raciones == raciones
+                    OutlinedButton({ repo.anadirACompra(r.id, raciones) }, Modifier.fillMaxWidth().height(52.dp)) {
+                        Icon(if (enLista) Icons.Outlined.Check else Icons.Outlined.AddShoppingCart, null)
+                        Text(if (enLista) "  En la lista de la compra ($raciones pers.)" else "  Añadir a la lista de la compra")
+                    }
+                    OutlinedButton({ elegirColecciones = true }, Modifier.fillMaxWidth().height(52.dp)) {
+                        Icon(Icons.Outlined.CollectionsBookmark, null); Text("  Añadir a colección")
                     }
                     // Copia esta receta como otra versión del mismo plato (empanada de la abuela, con huevo...)
                     OutlinedButton({ ir(Pantalla.Editor(null, versionDe = r.id)) }, Modifier.fillMaxWidth().height(52.dp)) {

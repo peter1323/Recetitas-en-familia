@@ -28,5 +28,15 @@ class RacionesTest {
         assertEquals("3:05", com.recetitas.model.textoCuentaAtras(185))
         assertEquals("1:02:05", com.recetitas.model.textoCuentaAtras(3725))
     }
+    @Test fun listaDeLaCompra() {
+        val lista = com.recetitas.model.juntarIngredientes(listOf(
+            "200 g de azúcar", "6 huevos", "1 l de leche", "Sal al gusto",
+            "100 g de azúcar", "3 huevos", "500 ml de leche", "sal al gusto",
+            "1,2 kg de harina", "300 g de harina", "2 cucharadas de aceite", "1 cucharada de aceite", "1/2 cebolla", "1/2 cebolla",
+        ))
+        assertEquals(listOf(
+            "300 g de azúcar", "9 huevos", "1,5 l de leche", "1,5 kg de harina", "3 cucharadas de aceite", "1 cebolla", "Sal al gusto",
+        ), lista)
+    }
     @Test fun igualSinCambios() = assertEquals("200 g", escalarIngrediente("200 g", 4, 4))
 }

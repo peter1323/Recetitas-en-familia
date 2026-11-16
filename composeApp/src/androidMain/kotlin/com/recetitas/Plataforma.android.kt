@@ -162,6 +162,18 @@ actual fun rememberCompartir(): (ruta: String, nombre: String) -> Unit {
 }
 
 @Composable
+actual fun rememberCompartirTexto(): (String) -> String? {
+    val vista = LocalView.current
+    return remember(vista) {
+        { texto ->
+            val envio = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, texto) }
+            vista.context.startActivity(Intent.createChooser(envio, "Compartir lista de la compra"))
+            null
+        }
+    }
+}
+
+@Composable
 actual fun rememberDictado(alTexto: (String) -> Unit): (() -> Unit)? {
     val alTextoActual = rememberUpdatedState(alTexto)
     val lanzador = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->

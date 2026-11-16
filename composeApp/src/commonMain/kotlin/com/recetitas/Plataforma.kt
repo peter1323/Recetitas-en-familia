@@ -33,6 +33,13 @@ expect fun guardarCopiaVisible(ruta: String, nombre: String): String?
 @Composable
 expect fun rememberCompartir(): (ruta: String, nombre: String) -> Unit
 
+/**
+ * Comparte un texto (la lista de la compra): en el móvil abre el menú de compartir (WhatsApp...),
+ * en Windows lo copia al portapapeles. Devuelve un aviso para enseñar, o null.
+ */
+@Composable
+expect fun rememberCompartirTexto(): (String) -> String?
+
 /** Dictado por voz. null si la plataforma no lo tiene. */
 @Composable
 expect fun rememberDictado(alTexto: (String) -> Unit): (() -> Unit)?

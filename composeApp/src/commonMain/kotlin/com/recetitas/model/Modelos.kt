@@ -106,6 +106,17 @@ data class Coleccion(
     val recetas: List<String> = emptyList(),
 )
 
+@Serializable
+data class EntradaCompra(val receta: String, val raciones: Int)
+
+/** Lista de la compra: recetas (con sus raciones), cosas sueltas añadidas a mano y lo ya comprado (tachado). */
+@Serializable
+data class ListaCompra(
+    val recetas: List<EntradaCompra> = emptyList(),
+    val extra: List<String> = emptyList(),
+    val tachados: List<String> = emptyList(),
+)
+
 /**
  * Receta a medias en el editor. Se guarda sola mientras se edita, por si Android cierra la app
  * (por ejemplo al abrir la cámara) o se va la batería. Incluye el paso que estaba abierto.

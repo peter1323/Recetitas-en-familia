@@ -32,9 +32,12 @@ import androidx.compose.material.icons.outlined.CollectionsBookmark
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.SoupKitchen
 import androidx.compose.material.icons.outlined.Tapas
 import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.recetitas.data.Repositorio
@@ -87,12 +91,19 @@ fun PantallaInicio(repo: Repositorio, ir: (Pantalla) -> Unit) {
     var busqueda by rememberSaveable { mutableStateOf("") }
 
     Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 16.dp)) {
-        Text("Recetitas en familia", style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(top = 16.dp, bottom = 12.dp))
+        val compra by repo.compra.collectAsState()
+        Row(Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("Recetitas en familia", style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.secondary, modifier = Modifier.weight(1f))
+            // Carrito de la lista de la compra, con cuántas recetas hay en ella
+            BadgedBox(badge = { if (compra.recetas.isNotEmpty()) Badge { Text("${compra.recetas.size}") } }) {
+                IconButton({ ir(Pantalla.Compra) }) { Icon(Icons.Outlined.ShoppingCart, "Lista de la compra", Modifier.size(30.dp)) }
+            }
+        }
         CampoBusqueda(busqueda, { busqueda = it }, "Buscar receta")
 
         LazyVerticalGrid(
-            GridCells.Adaptive(if (busqueda.isBlank()) 150.dp else 300.dp),
+            if (busqueda.isBlank()) CuadrosInicio else GridCells.Adaptive(300.dp),
             Modifier.weight(1f).padding(top = 12.dp),
             contentPadding = PaddingValues(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -165,4 +176,13 @@ fun CampoBusqueda(valor: String, alCambiar: (String) -> Unit, texto: String) {
         leadingIcon = { Icon(Icons.Outlined.Search, null) },
         trailingIcon = if (valor.isEmpty()) null else ({ IconButton({ alCambiar("") }) { Icon(Icons.Outlined.Clear, "Borrar búsqueda") } }),
     )
+}
+
+/** Cuadros de al menos 170 dp (para que quepa "Masas y panes"), pero siempre 2 por fila como mínimo en el móvil. */
+private val CuadrosInicio = object : GridCells {
+    override fun Density.calculateCrossAxisCellSizes(availableSize: Int, spacing: Int): List<Int> {
+        val n = maxOf(2, (availableSize + spacing) / (170.dp.roundToPx() + spacing))
+        val ancho = (availableSize - spacing * (n - 1)) / n
+        return List(n) { ancho }
+    }
 }

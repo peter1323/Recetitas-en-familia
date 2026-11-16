@@ -5,6 +5,8 @@ import com.recetitas.extraerZip
 import com.recetitas.model.Ajustes
 import com.recetitas.model.Borrador
 import com.recetitas.model.Coleccion
+import com.recetitas.model.EntradaCompra
+import com.recetitas.model.ListaCompra
 import com.recetitas.model.Paquete
 import com.recetitas.model.Receta
 import com.recetitas.model.Utensilio
@@ -80,6 +82,21 @@ class Repositorio(private val carpeta: String) {
         escribir(archivoRecetas, json.encodeToString(_recetas.value))
         _colecciones.value.filter { id in it.recetas }.forEach { guardarColeccion(it.copy(recetas = it.recetas - id)) }
     }
+
+    // ---------- LISTA DE LA COMPRA ----------
+
+    private val archivoCompra = Path(carpeta, "compra.json")
+    private val _compra = MutableStateFlow(cargar<ListaCompra>(archivoCompra) ?: ListaCompra())
+    val compra: StateFlow<ListaCompra> = _compra.asStateFlow()
+
+    fun guardarCompra(l: ListaCompra) {
+        _compra.value = l
+        escribir(archivoCompra, json.encodeToString(l))
+    }
+
+    /** Añade la receta a la lista con esas raciones (si ya estaba, se cambian las raciones). */
+    fun anadirACompra(receta: String, raciones: Int) =
+        guardarCompra(_compra.value.copy(recetas = _compra.value.recetas.filterNot { it.receta == receta } + EntradaCompra(receta, raciones)))
 
     // ---------- BORRADOR DEL EDITOR ----------
 

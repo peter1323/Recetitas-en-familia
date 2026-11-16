@@ -115,6 +115,37 @@ fun NombreColeccion(titulo: String, inicial: String, alCerrar: () -> Unit, alGua
     )
 }
 
+/** Desde una receta: marcar en qué colecciones está, o crear una nueva con ella dentro. */
+@Composable
+fun ColeccionesDeReceta(repo: Repositorio, idReceta: String, alCerrar: () -> Unit) {
+    val colecciones by repo.colecciones.collectAsState()
+    var nueva by remember { mutableStateOf(false) }
+    Aviso(
+        onDismissRequest = alCerrar,
+        title = { Text("Añadir a colección") },
+        text = {
+            Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+                if (colecciones.isEmpty()) Text("Aún no tienes colecciones. Crea la primera aquí abajo.")
+                colecciones.sortedBy { sinAcentos(it.nombre) }.forEach { c ->
+                    val dentro = idReceta in c.recetas
+                    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                        .clickable { repo.guardarColeccion(c.copy(recetas = if (dentro) c.recetas - idReceta else c.recetas + idReceta)) },
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(dentro, { repo.guardarColeccion(c.copy(recetas = if (it) c.recetas + idReceta else c.recetas - idReceta)) })
+                        Text(c.nombre, style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+                TextButton({ nueva = true }) { Icon(Icons.Outlined.Add, null); Text("  Nueva colección") }
+            }
+        },
+        confirmButton = { Button(alCerrar) { Text("Listo") } },
+    )
+    if (nueva) NombreColeccion("Nueva colección", "", alCerrar = { nueva = false }) { nombre ->
+        repo.guardarColeccion(Coleccion(nombre = nombre, recetas = listOf(idReceta)))
+        nueva = false
+    }
+}
+
 /** Elegir qué recetas van en una colección (casillas). */
 @Composable
 fun ElegirRecetasColeccion(repo: Repositorio, c: Coleccion, alCerrar: () -> Unit) {

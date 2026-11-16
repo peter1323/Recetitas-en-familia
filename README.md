@@ -35,7 +35,10 @@
 
 - **Recetas por tipo**: entrantes, primeros, segundos, postres, salsas, masas y panes, y otros. También hay favoritas.
 - **Buscar por nombre**, sin importar mayúsculas ni acentos.
-- **Colecciones**: listas propias con las recetas que quieras ("Mis recetas", "Navidad"…), desde el botón *Colecciones* de abajo.
+- **Colecciones**: listas propias con las recetas que quieras ("Mis recetas", "Navidad"…), desde el botón *Colecciones* de abajo o con *Añadir a colección* dentro de la receta.
+- **Temporizador**: si un paso tiene tiempo ("3 min", "1 h 30 min"), al tocar su etiqueta empieza una cuenta atrás que se ve en todas las pantallas. Al terminar suena la alarma (y vibra en el móvil).
+- **Lista de la compra**: *Añadir a la lista de la compra* dentro de cada receta, con las personas elegidas. El carrito de arriba junta los ingredientes de todas (200 g + 100 g de azúcar = 300 g), se van tachando y se puede compartir lo que falta.
+- **No se pierde nada a medias**: mientras editas una receta se guarda un borrador; si la app se cierra (por ejemplo al hacer una foto), al abrirla te ofrece seguir.
 - **Versiones de una receta**: varias formas de hacer el mismo plato (empanada de atún de la abuela, con huevo…) se agrupan en una sola tarjeta y al entrar eliges cuál cocinar. Se crean con *Crear otra versión* dentro de la receta.
 - **Recetas vinculadas**: un paso puede usar otra receta de la app (la mayonesa casera de la ensaladilla) y un botón te lleva a ella.
 - **Foto del plato con el nombre encima**, hecha con la cámara o elegida de la galería.

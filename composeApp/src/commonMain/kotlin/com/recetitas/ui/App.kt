@@ -1,7 +1,13 @@
 package com.recetitas.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
@@ -53,6 +59,7 @@ sealed interface Pantalla {
     data class Editor(val id: String?, val categoria: Categoria? = null, val versionDe: String? = null, val retomar: Boolean = false) : Pantalla
     data object Ajustes : Pantalla
     data object Pdf : Pantalla
+    data object Compra : Pantalla
 }
 
 @Composable
@@ -102,7 +109,12 @@ fun App() {
             AtrasSistema(pila.size > 1, volver)
             val actual = pila.last()
             MantenerPantallaEncendida(ajustes.pantallaEncendida && actual is Pantalla.VerReceta)
-            Box(Modifier.fillMaxSize()) {
+            // Temporizadores de los pasos: franja arriba en todas las pantallas, empuja el contenido hacia abajo
+            val hayTemporizadores = Temporizadores.lista.collectAsState().value.isNotEmpty()
+            Column(Modifier.fillMaxSize()) {
+            // Siempre presente (aunque vacía): es la que hace sonar la alarma y muestra el aviso al terminar
+            CapaTemporizadores(if (hayTemporizadores) Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars).padding(top = 6.dp) else Modifier)
+            Box(Modifier.fillMaxWidth().weight(1f).then(if (hayTemporizadores) Modifier.consumeWindowInsets(WindowInsets.statusBars) else Modifier)) {
                 when (actual) {
                     Pantalla.Inicio -> PantallaInicio(repo, ir)
                     is Pantalla.Lista -> key(actual) { PantallaLista(repo, actual, ir, volver) }
@@ -116,9 +128,9 @@ fun App() {
                     })
                     Pantalla.Ajustes -> PantallaAjustes(repo, volver, importar = { selectorImportar.launch() }, ir = ir)
                     Pantalla.Pdf -> PantallaPdf(repo, volver)
+                    Pantalla.Compra -> PantallaCompra(repo, ir, volver)
                 }
-                // Temporizadores de los pasos: se ven en todas las pantallas
-                CapaTemporizadores(Modifier.align(Alignment.BottomCenter).padding(bottom = 110.dp))
+            }
             }
 
             paquete?.let { p ->

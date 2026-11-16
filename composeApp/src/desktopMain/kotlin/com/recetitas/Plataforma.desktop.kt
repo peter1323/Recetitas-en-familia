@@ -65,6 +65,14 @@ actual fun rememberCompartir(): (ruta: String, nombre: String) -> Unit {
 }
 
 @Composable
+actual fun rememberCompartirTexto(): (String) -> String? = remember {
+    { texto ->
+        java.awt.Toolkit.getDefaultToolkit().systemClipboard.setContents(java.awt.datatransfer.StringSelection(texto), null)
+        "Lista copiada. Pégala en WhatsApp, en un correo o donde quieras."
+    }
+}
+
+@Composable
 actual fun rememberDictado(alTexto: (String) -> Unit): (() -> Unit)? = null
 
 @Composable
