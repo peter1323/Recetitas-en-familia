@@ -98,6 +98,30 @@ class PdfYPaqueteTest {
         assertEquals("Mis recetas", Repositorio(Path(carpetaTemporal(), "colecciones-${flan.id}").toString()).colecciones.value.single().nombre)
     }
 
+    @Test fun copiaSoloSiHayCambios() {
+        val repo = Repositorio(Path(carpetaTemporal(), "copias-${flan.id}").toString())
+        repo.guardarReceta(flan)
+        assertTrue(repo.copiaDiariaSiToca() != null)
+        // Otro día sin cambios: no se hace copia
+        repo.guardarAjustes(repo.ajustes.value.copy(ultimaCopia = 0))
+        assertEquals(null, repo.copiaDiariaSiToca())
+        // Otro día con cambios: sí
+        repo.guardarAjustes(repo.ajustes.value.copy(ultimaCopia = 0))
+        repo.guardarReceta(flan.copy(nombre = "Flan de la abuela"))
+        assertTrue(repo.copiaDiariaSiToca() != null)
+    }
+
+    @Test fun borradorGuardaSusFotos() {
+        val repo = Repositorio(Path(carpetaTemporal(), "borrador-${flan.id}").toString())
+        val foto = repo.guardarFoto(byteArrayOf(1))
+        repo.guardarBorrador(com.recetitas.model.Borrador(flan.copy(foto = foto), nueva = true))
+        repo.limpiarFotos()
+        assertTrue(SystemFileSystem.exists(Path(repo.rutaFoto(foto))), "la foto de una receta a medias no se borra")
+        assertEquals(flan.nombre, repo.borrador()!!.receta.nombre)
+        repo.borrarBorrador()
+        assertEquals(null, repo.borrador())
+    }
+
     @Test fun limpiarFotosSoloBorraHuerfanas() {
         val repo = Repositorio(Path(carpetaTemporal(), "limpiar-${flan.id}").toString())
         val usada = repo.guardarFoto(byteArrayOf(1))

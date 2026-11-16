@@ -3,6 +3,7 @@ package com.recetitas.data
 import com.recetitas.crearZip
 import com.recetitas.extraerZip
 import com.recetitas.model.Ajustes
+import com.recetitas.model.Borrador
 import com.recetitas.model.Coleccion
 import com.recetitas.model.Paquete
 import com.recetitas.model.Receta
@@ -80,6 +81,16 @@ class Repositorio(private val carpeta: String) {
         _colecciones.value.filter { id in it.recetas }.forEach { guardarColeccion(it.copy(recetas = it.recetas - id)) }
     }
 
+    // ---------- BORRADOR DEL EDITOR ----------
+
+    private val archivoBorrador = Path(carpeta, "borrador.json")
+
+    fun borrador(): Borrador? = cargar<Borrador>(archivoBorrador)
+
+    fun guardarBorrador(b: Borrador) = escribir(archivoBorrador, json.encodeToString(b))
+
+    fun borrarBorrador() = fs.delete(archivoBorrador, mustExist = false)
+
     // ---------- COLECCIONES ----------
 
     private val archivoColecciones = Path(carpeta, "colecciones.json")
@@ -131,7 +142,10 @@ class Repositorio(private val carpeta: String) {
 
     /** Borra las fotos que ya no usa ninguna receta ni utensilio. Solo al arrancar, para no tocar una edición a medias. */
     fun limpiarFotos() {
-        val usadas = _recetas.value.flatMap { it.fotos() }.toSet() + _utensilios.value.mapNotNull { it.foto }
+        // Las fotos de una receta a medias (borrador) también cuentan: aún no se han guardado en ninguna receta
+        val b = borrador()
+        val usadas = _recetas.value.flatMap { it.fotos() }.toSet() + _utensilios.value.mapNotNull { it.foto } +
+            b?.receta?.fotos().orEmpty() + listOfNotNull(b?.paso?.foto)
         fs.list(carpetaFotos).filter { it.name !in usadas }.forEach { fs.delete(it) }
     }
 
@@ -202,9 +216,15 @@ class Repositorio(private val carpeta: String) {
         val a = _ajustes.value
         val hoy = Clock.System.now().toEpochMilliseconds() / 86_400_000
         if (!a.copiaDiaria || a.ultimaCopia == hoy || _recetas.value.isEmpty()) return null
+        // Si no ha cambiado nada desde la última copia, no se hace otra (cada copia lleva todas las fotos)
+        val huella = json.encodeToString(Paquete(_recetas.value, _utensilios.value, _colecciones.value)).hashCode()
+        if (huella == a.huellaCopia && copias().isNotEmpty()) {
+            guardarAjustes(a.copy(ultimaCopia = hoy))
+            return null
+        }
         val ruta = Path(carpetaCopias, "copia-$hoy.receta").toString()
         exportar(_recetas.value, ruta, copiaCompleta = true)
-        guardarAjustes(a.copy(ultimaCopia = hoy))
+        guardarAjustes(a.copy(ultimaCopia = hoy, huellaCopia = huella))
         fs.list(carpetaCopias).sortedBy { it.name }.dropLast(7).forEach { fs.delete(it) }
         return ruta
     }

@@ -93,6 +93,8 @@ data class Ajustes(
     val pantallaEncendida: Boolean = true,
     val copiaDiaria: Boolean = true,
     val ultimaCopia: Long = 0,
+    /** Huella de las recetas en la última copia: si no ha cambiado nada, no se repite. */
+    val huellaCopia: Int = 0,
 )
 
 val ESCALAS_LETRA = listOf(1.0f, 1.2f, 1.4f, 1.65f)
@@ -102,6 +104,19 @@ data class Coleccion(
     val id: String = nuevoId(),
     val nombre: String = "",
     val recetas: List<String> = emptyList(),
+)
+
+/**
+ * Receta a medias en el editor. Se guarda sola mientras se edita, por si Android cierra la app
+ * (por ejemplo al abrir la cámara) o se va la batería. Incluye el paso que estaba abierto.
+ */
+@Serializable
+data class Borrador(
+    val receta: Receta,
+    val nueva: Boolean,
+    val versionDe: String? = null,
+    val pasoIndice: Int? = null,
+    val paso: Paso? = null,
 )
 
 /** Lo que va dentro de un archivo .receta y de las copias de seguridad. */

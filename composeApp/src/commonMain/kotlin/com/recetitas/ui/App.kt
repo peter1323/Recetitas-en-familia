@@ -47,7 +47,7 @@ sealed interface Pantalla {
     data object Colecciones : Pantalla
     data class VerReceta(val id: String) : Pantalla
     /** id == null: receta nueva; con [versionDe], nueva versión copiada de esa receta. */
-    data class Editor(val id: String?, val categoria: Categoria? = null, val versionDe: String? = null) : Pantalla
+    data class Editor(val id: String?, val categoria: Categoria? = null, val versionDe: String? = null, val retomar: Boolean = false) : Pantalla
     data object Ajustes : Pantalla
     data object Pdf : Pantalla
 }
@@ -77,6 +77,7 @@ fun App() {
     val recibido by archivoRecibido.collectAsState()
     var paquete by remember { mutableStateOf<Paquete?>(null) }
     var errorImportar by remember { mutableStateOf(false) }
+    var borradorPendiente by remember { mutableStateOf(repo.borrador()) }
     val tmpImportar = remember { Path(carpetaTemporal(), "importar").toString() }
     LaunchedEffect(recibido) {
         val ruta = recibido ?: return@LaunchedEffect
@@ -105,7 +106,7 @@ fun App() {
                     Pantalla.Colecciones -> PantallaColecciones(repo, ir, volver)
                     // key: al saltar de una receta a otra vinculada, la nueva empieza desde arriba
                     is Pantalla.VerReceta -> key(actual.id) { PantallaReceta(repo, actual.id, ir, volver) }
-                    is Pantalla.Editor -> PantallaEditor(repo, actual.id, actual.categoria, actual.versionDe, volver = volver, alGuardar = { id ->
+                    is Pantalla.Editor -> PantallaEditor(repo, actual.id, actual.categoria, actual.versionDe, actual.retomar, volver = volver, alGuardar = { id ->
                         // Al crear una receta nueva se pasa directamente a verla
                         volver()
                         if (actual.id == null) ir(Pantalla.VerReceta(id))
@@ -137,6 +138,21 @@ fun App() {
                         }) { Text("Sí, guardar") }
                     },
                     dismissButton = { TextButton({ paquete = null }) { Text("No") } },
+                )
+            }
+            // La app se cerró con una receta a medias (Android la cerró al abrir la cámara, se fue la batería...)
+            borradorPendiente?.let { b ->
+                Aviso(
+                    onDismissRequest = { borradorPendiente = null },
+                    title = { Text("Tienes una receta a medias") },
+                    text = { Text("\"${b.receta.titulo().ifBlank { "Receta sin nombre" }}\" no se llegó a guardar. ¿Sigues con ella?") },
+                    confirmButton = {
+                        Button({
+                            borradorPendiente = null
+                            ir(Pantalla.Editor(if (b.nueva) null else b.receta.id, versionDe = b.versionDe, retomar = true))
+                        }) { Text("Sí, seguir") }
+                    },
+                    dismissButton = { TextButton({ borradorPendiente = null; repo.borrarBorrador() }) { Text("No, descartarla") } },
                 )
             }
             if (errorImportar) Aviso(

@@ -54,6 +54,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -67,6 +71,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.recetitas.AtrasSistema
 import com.recetitas.data.Repositorio
+import com.recetitas.model.Borrador
 import com.recetitas.model.Categoria
 import com.recetitas.model.Fuego
 import com.recetitas.model.ModoHorno
@@ -79,27 +84,43 @@ import com.recetitas.model.nuevoId
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun PantallaEditor(repo: Repositorio, id: String?, categoria: Categoria?, versionDe: String?, volver: () -> Unit, alGuardar: (String) -> Unit) {
+fun PantallaEditor(
+    repo: Repositorio, id: String?, categoria: Categoria?, versionDe: String?, retomar: Boolean,
+    volver: () -> Unit, alGuardar: (String) -> Unit,
+) {
+    val borrador = remember { if (retomar) repo.borrador() else null }
     val original = remember(id) {
         repo.recetas.value.find { it.id == id }
             // Nueva versión: copia de la otra con el mismo nombre, para cambiar solo lo que sea distinto
             ?: repo.recetas.value.find { it.id == versionDe }?.copy(id = nuevoId(), version = "", favorita = false)
             ?: Receta(categoria = categoria ?: Categoria.PRIMEROS, ingredientes = listOf(""))
     }
-    var r by remember(id) { mutableStateOf(original) }
+    var r by remember(id) { mutableStateOf(borrador?.receta ?: original) }
     val utensilios by repo.utensilios.collectAsState()
     var errorNombre by remember { mutableStateOf(false) }
     var salir by remember { mutableStateOf(false) }
-    var paso by remember { mutableStateOf<Int?>(null) }  // índice; r.pasos.size = paso nuevo
+    var paso by remember { mutableStateOf(borrador?.pasoIndice) }  // índice; r.pasos.size = paso nuevo
+    var pasoEnCurso by remember { mutableStateOf(borrador?.paso) }  // lo que hay escrito en el paso abierto
     var elegirUtensilios by remember { mutableStateOf(false) }
 
-    val intentarVolver = { if (r != original) salir = true else volver() }
+    // Borrador automático: medio segundo después de cada cambio se guarda en disco
+    LaunchedEffect(r, paso, pasoEnCurso) {
+        if (r == original && paso == null) return@LaunchedEffect
+        delay(500)
+        withContext(Dispatchers.Default) {
+            runCatching { repo.guardarBorrador(Borrador(r, nueva = id == null, versionDe, paso, pasoEnCurso.takeIf { paso != null })) }
+        }
+    }
+    val salirDelEditor = { repo.borrarBorrador(); volver() }
+
+    val intentarVolver = { if (r != original) salir = true else salirDelEditor() }
     AtrasSistema(true, intentarVolver)
 
     fun guardar() {
         if (r.nombre.isBlank()) { errorNombre = true; return }
         val limpia = r.copy(nombre = r.nombre.trim(), version = r.version.trim(), ingredientes = r.ingredientes.map { it.trim() }.filter { it.isNotEmpty() })
         repo.guardarReceta(limpia)
+        repo.borrarBorrador()
         alGuardar(limpia.id)
     }
 
@@ -210,10 +231,12 @@ fun PantallaEditor(repo: Repositorio, id: String?, categoria: Categoria?, versio
     }
 
     paso?.let { i ->
-        val actual = r.pasos.getOrNull(i) ?: Paso()
-        EditorPaso(repo, r.id, actual, if (i < r.pasos.size) "Editar paso ${i + 1}" else "Nuevo paso", alCerrar = { paso = null }) { nuevo ->
+        // Al retomar un borrador, el paso abierto vuelve con lo que se había escrito
+        val actual = pasoEnCurso ?: r.pasos.getOrNull(i) ?: Paso()
+        EditorPaso(repo, r.id, actual, if (i < r.pasos.size) "Editar paso ${i + 1}" else "Nuevo paso",
+            alCerrar = { paso = null; pasoEnCurso = null }, alCambiar = { pasoEnCurso = it }) { nuevo ->
             r = r.copy(pasos = if (i < r.pasos.size) r.pasos.toMutableList().also { it[i] = nuevo } else r.pasos + nuevo)
-            paso = null
+            paso = null; pasoEnCurso = null
         }
     }
 
@@ -228,7 +251,7 @@ fun PantallaEditor(repo: Repositorio, id: String?, categoria: Categoria?, versio
         title = { Text("¿Salir sin guardar?") },
         text = { Text("Se perderán los cambios que has hecho.") },
         confirmButton = { Button({ salir = false; guardar() }) { Text("Guardar") } },
-        dismissButton = { TextButton({ salir = false; volver() }) { Text("Salir sin guardar") } },
+        dismissButton = { TextButton({ salir = false; salirDelEditor() }) { Text("Salir sin guardar") } },
     )
 }
 
@@ -240,8 +263,12 @@ private fun <T> mover(lista: List<T>, i: Int, d: Int): List<T> {
 
 /** Menú para editar un paso: texto, fuego, tiempo, receta vinculada, foto y nota. [idReceta]: la receta del paso (no se puede vincular a sí misma). */
 @Composable
-fun EditorPaso(repo: Repositorio, idReceta: String, inicial: Paso, titulo: String, alCerrar: () -> Unit, alGuardar: (Paso) -> Unit) {
+fun EditorPaso(
+    repo: Repositorio, idReceta: String, inicial: Paso, titulo: String, alCerrar: () -> Unit,
+    alCambiar: (Paso) -> Unit = {}, alGuardar: (Paso) -> Unit,
+) {
     var p by remember { mutableStateOf(inicial) }
+    LaunchedEffect(p) { if (p != inicial) alCambiar(p) }
     var error by remember { mutableStateOf(false) }
     var elegirReceta by remember { mutableStateOf(false) }
     if (elegirReceta) SelectorReceta(repo, idReceta, alCerrar = { elegirReceta = false }) { p = p.copy(receta = it); elegirReceta = false }
